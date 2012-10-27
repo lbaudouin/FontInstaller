@@ -22,16 +22,68 @@
      <number>9</number>
     </property>
     <item>
-     <layout class="QHBoxLayout" name="horizontalLayout">
+     <layout class="QHBoxLayout" name="chooseLayout">
       <item>
-       <widget class="QLineEdit" name="lineEdit">
+       <widget class="QPushButton" name="buttonDefault">
         <property name="text">
-         <string>AZERTY azerty &amp;é&quot;'(-è_çà)= 123456789</string>
+         <string>Default Fonts</string>
         </property>
        </widget>
       </item>
       <item>
-       <widget class="QPushButton" name="pushButton">
+       <widget class="QPushButton" name="buttonFolder">
+        <property name="text">
+         <string>Open Folder</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <spacer name="horizontalSpacer">
+        <property name="orientation">
+         <enum>Qt::Horizontal</enum>
+        </property>
+        <property name="sizeHint" stdset="0">
+         <size>
+          <width>40</width>
+          <height>20</height>
+         </size>
+        </property>
+       </spacer>
+      </item>
+      <item>
+       <layout class="QHBoxLayout" name="horizontalLayout_4">
+        <item>
+         <widget class="QRadioButton" name="radioGrid">
+          <property name="text">
+           <string>Grid</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QRadioButton" name="radioLine">
+          <property name="text">
+           <string>Line</string>
+          </property>
+          <property name="checked">
+           <bool>true</bool>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </item>
+     </layout>
+    </item>
+    <item>
+     <layout class="QHBoxLayout" name="textLayout">
+      <item>
+       <widget class="QLineEdit" name="lineEdit">
+        <property name="text">
+         <string>AZERTY azerty &amp;%#*é&quot;'(-è_çà)=.: 123456789</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="buttonTry">
         <property name="text">
          <string>Try</string>
         </property>
@@ -50,11 +102,14 @@
          <x>0</x>
          <y>0</y>
          <width>780</width>
-         <height>268</height>
+         <height>225</height>
         </rect>
        </property>
       </widget>
      </widget>
+    </item>
+    <item>
+     <layout class="QHBoxLayout" name="sampleLayout"/>
     </item>
    </layout>
   </widget>

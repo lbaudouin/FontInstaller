@@ -42,7 +42,13 @@
 #define MAINWINDOW_H
 
 #include "ui_mainwindowbase.h"
+#include <QtGui>
 #include <QDebug>
+#include <QList>
+#include <QDir>
+#include <QFileDialog>
+#include <QTimer>
+#include <QButtonGroup>
 
 QT_BEGIN_NAMESPACE
 class QTextEdit;
@@ -52,6 +58,44 @@ QT_END_NAMESPACE
 
 typedef QList<QTreeWidgetItem *> StyleItems;
 
+class QFontLabel : public QLabel
+{
+    Q_OBJECT
+public:
+    QFontLabel(QString text = "Aa", int sampleSize = 15){
+        size = sampleSize;
+        this->setNewText(text);
+        QFont currentFont = this->font();
+        currentFont.setPointSize(size);
+        this->setFont(currentFont);
+    }
+    void mousePressEvent(QMouseEvent *){
+        emit this->selectFont(this->font());
+    }
+public slots:
+    void setNewText(QString text){
+        if(text.isEmpty()){
+            setNewText("Aa");
+            return;
+        }
+        this->setText(text);
+    }
+    void setNewFont(QFont font){
+        font.setPointSize(size);
+        this->setFont(font);
+    }
+signals:
+    void selectFont(QFont);
+private:
+    int size;
+};
+
+struct FontData{
+    int id;
+    QString file;
+    QStringList families;
+};
+
 class MainWindow : public QMainWindow, private Ui::MainWindowBase
 {
     Q_OBJECT
@@ -59,9 +103,31 @@ class MainWindow : public QMainWindow, private Ui::MainWindowBase
 public:
     MainWindow(QWidget *parent = 0);
 
-public slots:
-    void showFont();
+private:
+    QFontDatabase database;
+    QList<QFont> fonts;
+    QStringList files;
+    QFontLabel *sample;
+    QList<FontData> fonts_data;
 
+protected:
+
+public slots:
+    void changeText();
+    void showFontLine(QString text = "");
+    void showFontGrid();
+    void getFonts(int id);
+    void openFolder();
+    void loadFonts();
+    void loadDerfaultFont();
+    void install();
+
+    void displayFont(QFont);
+
+signals:
+    void textChanged(QString);
+    void fontChanged(QFont);
+    void setInstallEnabled(bool);
 };
 
 #endif
