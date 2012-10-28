@@ -96,14 +96,20 @@ struct FontData{
     QStringList families;
 };
 
-class MainWindow : public QMainWindow, private Ui::MainWindowBase
+namespace Ui {
+    class MainWindowBase;
+}
+
+class MainWindow : public QMainWindow
 {
     Q_OBJECT
 
 public:
     MainWindow(QWidget *parent = 0);
+    void changeEvent(QEvent *e);
 
 private:
+    Ui::MainWindowBase *ui;
     QFontDatabase database;
     QList<QFont> fonts;
     QStringList files;
@@ -111,6 +117,7 @@ private:
     QList<FontData> fonts_data;
 
 protected:
+    void updateFontCount(int nb);
 
 public slots:
     void changeText();

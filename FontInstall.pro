@@ -2,4 +2,8 @@ FORMS     = mainwindowbase.ui
 HEADERS   = mainwindow.h
 SOURCES   = main.cpp \
             mainwindow.cpp
-QT += testlib
+
+RESOURCES += \
+    ressources.qrc
+TRANSLATIONS = FontInstall_fr.ts
+TARGET = FontInstall

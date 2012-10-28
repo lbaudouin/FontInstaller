@@ -1,56 +1,76 @@
 #include "mainwindow.h"
 
 MainWindow::MainWindow(QWidget *parent)
-   : QMainWindow(parent)
+   : QMainWindow(parent), ui(new Ui::MainWindowBase)
 {
-    setupUi(this);
+    ui->setupUi(this);
 
-    connect(buttonTry,SIGNAL(clicked()),this,SLOT(changeText()));
-    connect(lineEdit,SIGNAL(returnPressed()),this,SLOT(changeText()));
-    connect(buttonFolder,SIGNAL(clicked()),this,SLOT(openFolder()));
-    connect(buttonDefault,SIGNAL(clicked()),this,SLOT(loadDerfaultFont()));
+    connect(ui->buttonTry,SIGNAL(clicked()),this,SLOT(changeText()));
+    connect(ui->lineEdit,SIGNAL(returnPressed()),this,SLOT(changeText()));
+    connect(ui->buttonFolder,SIGNAL(clicked()),this,SLOT(openFolder()));
+    connect(ui->buttonDefault,SIGNAL(clicked()),this,SLOT(loadDerfaultFont()));
 
-    QStringList families = database.families();
-    this->setWindowTitle("Font Sample - " + QString::number(families.size()) + " fonts");
+    updateFontCount(0);
 
     QButtonGroup *buttonGroup = new QButtonGroup;
-    buttonGroup->addButton(radioGrid,0);
-    buttonGroup->addButton(radioLine,1);
+    buttonGroup->addButton(ui->radioGrid,0);
+    buttonGroup->addButton(ui->radioLine,1);
     buttonGroup->setExclusive(true);
 
-    lineEdit->setEnabled(false);
-    buttonTry->setEnabled(false);
+    ui->lineEdit->setEnabled(false);
+    ui->buttonTry->setEnabled(false);
 
     sample = new QFontLabel("Aa",35);
     connect(this,SIGNAL(textChanged(QString)),sample,SLOT(setNewText(QString)));
     connect(this,SIGNAL(fontChanged(QFont)),sample,SLOT(setNewFont(QFont)));
-    sampleLayout->addWidget(sample);
+    ui->sampleLayout->addWidget(sample);
 
     QVBoxLayout *buttonLayout = new QVBoxLayout;
-    QPushButton *buttonInstall = new QPushButton("Install");
+    QPushButton *buttonInstall = new QPushButton(tr("Install"));
     buttonInstall->setEnabled(false);
     connect(this,SIGNAL(setInstallEnabled(bool)),buttonInstall,SLOT(setEnabled(bool)));
     buttonInstall->setSizePolicy(QSizePolicy::Maximum,QSizePolicy::Fixed);
     buttonLayout->addWidget(buttonInstall);
     connect(buttonInstall,SIGNAL(clicked()),this,SLOT(install()));
-    QPushButton *buttonQuit = new QPushButton("Quit");
+    QPushButton *buttonQuit = new QPushButton(tr("Quit"));
     buttonQuit->setSizePolicy(QSizePolicy::Maximum,QSizePolicy::Fixed);
     buttonLayout->addWidget(buttonQuit);
     connect(buttonQuit,SIGNAL(clicked()),this,SLOT(close()));
-    sampleLayout->addLayout( buttonLayout );
+    ui->sampleLayout->addLayout( buttonLayout );
+}
+
+void MainWindow::changeEvent(QEvent *e)
+{
+    QMainWindow::changeEvent(e);
+    switch (e->type()) {
+    case QEvent::LanguageChange:
+        ui->retranslateUi(this);
+        break;
+    default:
+        break;
+    }
+}
+
+void MainWindow::updateFontCount(int nb)
+{
+    QString title = tr("Font Install");
+    if(nb!=0){
+        title += " - " + QString::number(nb) + " " +tr("fonts");
+    }
+    this->setWindowTitle(title);
 }
 
 void MainWindow::changeText()
 {
-     QString text = lineEdit->text().trimmed();
+     QString text = ui->lineEdit->text().trimmed();
      emit this->textChanged(text);
 }
 
 void MainWindow::showFontGrid()
 {
 
-    lineEdit->setEnabled(true);
-    buttonTry->setEnabled(true);
+    ui->lineEdit->setEnabled(true);
+    ui->buttonTry->setEnabled(true);
 }
 
 void MainWindow::showFontLine(QString text)
@@ -58,7 +78,7 @@ void MainWindow::showFontLine(QString text)
   QWidget *w = new QWidget;
   QVBoxLayout *layout = new QVBoxLayout;
   w->setLayout(layout);
-  scrollArea->setWidget(w);
+  ui->scrollArea->setWidget(w);
 
   this->setCursor(Qt::WaitCursor);
   for(int i=0;i<fonts.size();i++){
@@ -74,10 +94,12 @@ void MainWindow::showFontLine(QString text)
       fontLabel->setStatusTip( QString("%1 %2").arg(font.family()).arg(font.styleName()) );
       //layout->addWidget(fontname,i,0);
       layout->addWidget(fontLabel);
+
+      if(i==0) emit this->fontChanged(font);
   }
   this->setCursor(Qt::ArrowCursor);
-  lineEdit->setEnabled(true);
-  buttonTry->setEnabled(true);
+  ui->lineEdit->setEnabled(true);
+  ui->buttonTry->setEnabled(true);
 }
 
 void MainWindow::getFonts(int id)
@@ -107,11 +129,9 @@ void MainWindow::openFolder()
     if(!defaultDir.exists())
         defaultPath = QDir::homePath();
     QString dirpath = QFileDialog::getExistingDirectory(this, tr("Open Directory"), defaultPath, QFileDialog::ShowDirsOnly);
-    qDebug() << "Dir: " << dirpath;
     dirpath += "/";
     QDir dir(dirpath);
     files = dir.entryList(QStringList() << "*.ttf" << "*.TTF" << "*.otf" << "*.OTF");
-    qDebug() << "Load " << files.size() << " font files";
     for(int i=0;i<files.size();i++){
         files[i].prepend(dirpath);
     }
@@ -125,8 +145,6 @@ void MainWindow::openFolder()
 
 void MainWindow::loadFonts()
 {
-    QTime time;
-    time.start();
     fonts.clear();
     fonts_data.clear();
     database.removeAllApplicationFonts();
@@ -136,25 +154,20 @@ void MainWindow::loadFonts()
       fd.file = files.at(i);
       fd.id = database.addApplicationFont( files.at(i) );
       fd.families = database.applicationFontFamilies( fd.id );
+      fonts_data.push_back(fd);
       ids.push_back(fd.id);
     }
-    qDebug() << "Font Loaded (" << (double)time.elapsed()/1000.0 << "s - " << (double)time.elapsed()/(1000.0*files.size()) << "s/file)";
-    time.restart();
     for(int i=0;i<ids.size();i++){
         getFonts(ids.at(i));
     }
-    qDebug() << "Font Ready (" << (double)time.elapsed()/1000.0 << "s - " << (double)time.elapsed()/(1000.0*files.size()) << "s/font)";
-    time.restart();
     showFontLine();
-    qDebug() << "Font Display (" << (double)time.elapsed()/1000.0 << "s - " << (double)time.elapsed()/(1000.0*files.size()) << "s/font)";
-    this->setWindowTitle("Font Sample - " + QString::number(fonts.size()) + " fonts");
+    updateFontCount(fonts.size());
 }
 
 void MainWindow::loadDerfaultFont()
 {
     emit setInstallEnabled(false);
-    QTime time;
-    time.start();
+    fonts.clear();
     database.removeAllApplicationFonts();
     QStringList families = database.families();
     foreach(QString family, families){
@@ -172,16 +185,18 @@ void MainWindow::loadDerfaultFont()
         fonts.push_back(f);
       }
     }
-    qDebug() << "Font Loaded (" << (double)time.elapsed()/1000.0 << "s - " << (double)time.elapsed()/(1000.0*files.size()) << "s/font)";
-    time.restart();
     showFontLine();
-    qDebug() << "Font Display (" << (double)time.elapsed()/1000.0 << "s - " << (double)time.elapsed()/(1000.0*files.size()) << "s/font)";
-
+    updateFontCount(fonts.size());
 }
 
 void MainWindow::install()
 {
-
+    QString family = sample->font().family();
+    for(int i=0;i<fonts_data.size();i++){
+        if(fonts_data.at(i).families.contains(family)){
+            QDesktopServices::openUrl(QUrl("file:///" + fonts_data.at(i).file, QUrl::TolerantMode));
+        }
+    }
 }
 
 void MainWindow::displayFont(QFont font)
