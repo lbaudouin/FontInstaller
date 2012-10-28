@@ -4,27 +4,32 @@
 <context>
     <name>MainWindow</name>
     <message>
-        <location filename="mainwindow.cpp" line="30"/>
+        <location filename="mainwindow.cpp" line="46"/>
+        <source>Options</source>
+        <translation>Options</translation>
+    </message>
+    <message>
+        <location filename="mainwindow.cpp" line="52"/>
         <source>Install</source>
         <translation>Installer</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="36"/>
+        <location filename="mainwindow.cpp" line="58"/>
         <source>Quit</source>
         <translation>Quitter</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="45"/>
+        <location filename="mainwindow.cpp" line="114"/>
         <source>Font Install</source>
         <translation>Font Install</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="45"/>
+        <location filename="mainwindow.cpp" line="116"/>
         <source>fonts</source>
         <translation>polices</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="116"/>
+        <location filename="mainwindow.cpp" line="209"/>
         <source>Open Directory</source>
         <translation>Ouvrir un répertoire</translation>
     </message>
@@ -59,6 +64,26 @@
         <location filename="mainwindowbase.ui" line="88"/>
         <source>Try</source>
         <translation>Essayer</translation>
+    </message>
+    <message>
+        <location filename="mainwindowbase.ui" line="116"/>
+        <source>Size:</source>
+        <translation>Taille :</translation>
+    </message>
+    <message>
+        <location filename="mainwindowbase.ui" line="133"/>
+        <source>Sample size:</source>
+        <translation>Taille (exmple) :</translation>
+    </message>
+    <message>
+        <location filename="mainwindowbase.ui" line="150"/>
+        <source>Columns:</source>
+        <translation>Colonnes :</translation>
+    </message>
+    <message>
+        <location filename="mainwindowbase.ui" line="173"/>
+        <source>Apply</source>
+        <translation>Appliquer</translation>
     </message>
 </context>
 </TS>

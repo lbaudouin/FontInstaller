@@ -11,21 +11,46 @@ MainWindow::MainWindow(QWidget *parent)
     connect(ui->buttonDefault,SIGNAL(clicked()),this,SLOT(loadDerfaultFont()));
 
     updateFontCount(0);
+    nbCols = 5;
+    currentSize = 15;
+
+    this->setMinimumSize(640,480);
 
     QButtonGroup *buttonGroup = new QButtonGroup;
     buttonGroup->addButton(ui->radioGrid,0);
     buttonGroup->addButton(ui->radioLine,1);
     buttonGroup->setExclusive(true);
+    connect(buttonGroup,SIGNAL(buttonClicked(int)),this,SLOT(changeDisplay(int)));
 
     ui->lineEdit->setEnabled(false);
     ui->buttonTry->setEnabled(false);
 
+    setOptionsVisible(false);
+
+    for(int i=7;i<31;i++)
+        ui->comboSize->addItem(QString::number(i));
+    ui->comboSize->setCurrentIndex(8);
+    for(int i=7;i<101;i++)
+        ui->comboSampleSize->addItem(QString::number(i));
+    ui->comboSampleSize->setCurrentIndex(28);
+    for(int i=2;i<21;i++)
+        ui->comboColumns->addItem(QString::number(i));
+    ui->comboColumns->setCurrentIndex(3);
+
+
     sample = new QFontLabel("Aa",35);
     connect(this,SIGNAL(textChanged(QString)),sample,SLOT(setNewText(QString)));
     connect(this,SIGNAL(fontChanged(QFont)),sample,SLOT(setNewFont(QFont)));
+    connect(this,SIGNAL(setSampleSize(int)),sample,SLOT(setNewSize(int)));
     ui->sampleLayout->addWidget(sample);
 
     QVBoxLayout *buttonLayout = new QVBoxLayout;
+    QPushButton *buttonOptions = new QPushButton(tr("Options"));
+    buttonOptions->setSizePolicy(QSizePolicy::Maximum,QSizePolicy::Fixed);
+    buttonOptions->setCheckable(true);
+    buttonLayout->addWidget(buttonOptions);
+    connect(buttonOptions,SIGNAL(toggled(bool)),this,SLOT(setOptionsVisible(bool)));
+    connect(ui->buttonApply,SIGNAL(clicked()),this,SLOT(pressApply()));
     QPushButton *buttonInstall = new QPushButton(tr("Install"));
     buttonInstall->setEnabled(false);
     connect(this,SIGNAL(setInstallEnabled(bool)),buttonInstall,SLOT(setEnabled(bool)));
@@ -51,6 +76,41 @@ void MainWindow::changeEvent(QEvent *e)
     }
 }
 
+void MainWindow::setOptionsVisible(bool visibility)
+{
+    ui->labelSize->setVisible(visibility);
+    ui->labelSampleSize->setVisible(visibility);
+    ui->labelColumns->setVisible(visibility);
+    ui->comboSize->setVisible(visibility);
+    ui->comboSampleSize->setVisible(visibility);
+    ui->comboColumns->setVisible(visibility);
+    ui->buttonApply->setVisible(visibility);
+    ui->line_1->setVisible(visibility);
+    ui->line_2->setVisible(visibility);
+    ui->lineOptions->setVisible(visibility);
+}
+
+void MainWindow::pressApply()
+{
+    currentSize = ui->comboSize->currentText().toInt() ;
+    emit this->setSize( currentSize );
+    emit this->setSampleSize( ui->comboSampleSize->currentText().toInt() );
+    int newNbCols = ui->comboColumns->currentText().toInt();
+    if(nbCols!=newNbCols){
+        nbCols = newNbCols;
+        if(ui->radioGrid->isChecked())
+            showFontGrid();
+    }
+}
+
+void MainWindow::changeDisplay(int button)
+{
+    if(button==0)
+        showFontGrid();
+    else
+        showFontLine();
+}
+
 void MainWindow::updateFontCount(int nb)
 {
     QString title = tr("Font Install");
@@ -68,7 +128,28 @@ void MainWindow::changeText()
 
 void MainWindow::showFontGrid()
 {
+    QWidget *w = new QWidget;
+    QGridLayout *layout = new QGridLayout;
+    w->setLayout(layout);
+    ui->scrollArea->setWidget(w);
 
+    this->setCursor(Qt::WaitCursor);
+    for(int i=0;i<fonts.size();i++){
+        QFontLabel *fontLabel = new QFontLabel;
+        connect(fontLabel,SIGNAL(selectFont(QFont)),this,SLOT(displayFont(QFont)));
+        connect(this,SIGNAL(setSize(int)),fontLabel,SLOT(setNewSize(int)));
+        QFont font = fonts.at(i);
+        fontLabel->setNewFont( font );
+        fontLabel->setNewSize( currentSize );
+        fontLabel->setToolTip( QString("%1 %2").arg(font.family()).arg(font.styleName()) );
+        fontLabel->setStatusTip( QString("%1 %2").arg(font.family()).arg(font.styleName()) );
+        layout->addWidget(fontLabel,i/nbCols,i%nbCols);
+
+        if(i==0) emit this->fontChanged(font);
+    }
+    this->setCursor(Qt::ArrowCursor);
+    ui->lineEdit->setEnabled(true);
+    ui->buttonTry->setEnabled(true);
     ui->lineEdit->setEnabled(true);
     ui->buttonTry->setEnabled(true);
 }
@@ -85,14 +166,13 @@ void MainWindow::showFontLine(QString text)
       QFontLabel *fontLabel = new QFontLabel;
       connect(this,SIGNAL(textChanged(QString)),fontLabel,SLOT(setNewText(QString)));
       connect(fontLabel,SIGNAL(selectFont(QFont)),this,SLOT(displayFont(QFont)));
-      //QLabel *fontname = new QLabel;
+      connect(this,SIGNAL(setSize(int)),fontLabel,SLOT(setNewSize(int)));
       QFont font = fonts.at(i);
       fontLabel->setNewFont( font );
+      fontLabel->setNewSize( currentSize );
       fontLabel->setNewText( text.trimmed() );
-      //fontname->setText( QString("%1 %2").arg(font.family()).arg(font.styleName()) );
       fontLabel->setToolTip( QString("%1 %2").arg(font.family()).arg(font.styleName()) );
       fontLabel->setStatusTip( QString("%1 %2").arg(font.family()).arg(font.styleName()) );
-      //layout->addWidget(fontname,i,0);
       layout->addWidget(fontLabel);
 
       if(i==0) emit this->fontChanged(font);
@@ -160,8 +240,7 @@ void MainWindow::loadFonts()
     for(int i=0;i<ids.size();i++){
         getFonts(ids.at(i));
     }
-    showFontLine();
-    updateFontCount(fonts.size());
+    displayAllFont();
 }
 
 void MainWindow::loadDerfaultFont()
@@ -185,7 +264,15 @@ void MainWindow::loadDerfaultFont()
         fonts.push_back(f);
       }
     }
-    showFontLine();
+    displayAllFont();
+}
+
+void MainWindow::displayAllFont()
+{
+    if(ui->radioGrid->isChecked())
+        showFontGrid();
+    else
+        showFontLine();
     updateFontCount(fonts.size());
 }
 

@@ -2,4 +2,7 @@
     <qresource prefix="/lang">
         <file alias="lang_fr">FontInstall_fr.qm</file>
     </qresource>
+    <qresource prefix="/images">
+        <file alias="icon">images/fontinstall.png</file>
+    </qresource>
 </RCC>
