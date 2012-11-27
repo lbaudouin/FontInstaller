@@ -9,6 +9,7 @@
 #include <QTimer>
 #include <QButtonGroup>
 
+#include "QMultiProgressWidget.h"
 
 class QFontLabel : public QLabel
 {
@@ -75,6 +76,7 @@ private:
     QList<FontData> fonts_data;
     int nbCols;
     int currentSize;
+    QMultiProgressWidget *progress;
 
 protected:
     void updateFontCount(int nb);
@@ -101,6 +103,10 @@ signals:
     void setInstallEnabled(bool);
     void setSampleSize(int);
     void setSize(int);
+    void setTextProgress(int,QString);
+    void setMinimumProgress(int,int);
+    void setMaximumProgress(int,int);
+    void setValueProgress(int,int);
 };
 
-#endif
+#endif // MAINWINDOW_H

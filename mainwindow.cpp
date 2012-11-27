@@ -25,6 +25,8 @@ MainWindow::MainWindow(QWidget *parent)
     ui->lineEdit->setEnabled(false);
     ui->buttonTry->setEnabled(false);
 
+    ui->listView->setVisible(false);
+
     setOptionsVisible(false);
 
     for(int i=7;i<31;i++)
@@ -33,7 +35,7 @@ MainWindow::MainWindow(QWidget *parent)
     for(int i=7;i<101;i++)
         ui->comboSampleSize->addItem(QString::number(i));
     ui->comboSampleSize->setCurrentIndex(28);
-    for(int i=2;i<21;i++)
+    for(int i=2;i<26;i++)
         ui->comboColumns->addItem(QString::number(i));
     ui->comboColumns->setCurrentIndex(3);
 
@@ -62,6 +64,14 @@ MainWindow::MainWindow(QWidget *parent)
     buttonLayout->addWidget(buttonQuit);
     connect(buttonQuit,SIGNAL(clicked()),this,SLOT(close()));
     ui->sampleLayout->addLayout( buttonLayout );
+
+    progress = new QMultiProgressWidget(3,QStringList()<<tr("Reading Files")<<tr("Loading Fonts")<<tr("Displaying Fonts"));
+    connect(this,SIGNAL(setTextrogress(int,QString)),progress,SLOT(setText(int,QString)));
+    connect(this,SIGNAL(setMinimumProgress(int,int)),progress,SLOT(setMinimum(int,int)));
+    connect(this,SIGNAL(setMaximumProgress(int,int)),progress,SLOT(setMaximum(int,int)));
+    connect(this,SIGNAL(setValueProgress(int,int)),progress,SLOT(setValue(int,int)));
+    progress->show();
+    progress->hide();
 }
 
 void MainWindow::changeEvent(QEvent *e)
@@ -128,12 +138,15 @@ void MainWindow::changeText()
 
 void MainWindow::showFontGrid()
 {
+    QTime time;
+    time.start();
     QWidget *w = new QWidget;
     QGridLayout *layout = new QGridLayout;
     w->setLayout(layout);
-    ui->scrollArea->setWidget(w);
 
     this->setCursor(Qt::WaitCursor);
+    emit this->setMaximumProgress(2,fonts.size()-1);
+    emit this->setValueProgress(2,0);
     for(int i=0;i<fonts.size();i++){
         QFontLabel *fontLabel = new QFontLabel;
         connect(fontLabel,SIGNAL(selectFont(QFont)),this,SLOT(displayFont(QFont)));
@@ -145,21 +158,25 @@ void MainWindow::showFontGrid()
         fontLabel->setStatusTip( QString("%1 %2").arg(font.family()).arg(font.styleName()) );
         layout->addWidget(fontLabel,i/nbCols,i%nbCols);
 
+        emit this->setValueProgress(2,i);
         if(i==0) emit this->fontChanged(font);
     }
+    qDebug() << "Display Grid1" << time.elapsed();
+    ui->scrollArea->setWidget(w);
     this->setCursor(Qt::ArrowCursor);
     ui->lineEdit->setEnabled(true);
     ui->buttonTry->setEnabled(true);
-    ui->lineEdit->setEnabled(true);
-    ui->buttonTry->setEnabled(true);
+    qDebug() << "Display Grid2" << time.elapsed();
+    progress->hide();
 }
 
 void MainWindow::showFontLine(QString text)
 {
+    QTime time;
+    time.start();
   QWidget *w = new QWidget;
   QVBoxLayout *layout = new QVBoxLayout;
   w->setLayout(layout);
-  ui->scrollArea->setWidget(w);
 
   this->setCursor(Qt::WaitCursor);
   for(int i=0;i<fonts.size();i++){
@@ -175,11 +192,15 @@ void MainWindow::showFontLine(QString text)
       fontLabel->setStatusTip( QString("%1 %2").arg(font.family()).arg(font.styleName()) );
       layout->addWidget(fontLabel);
 
+      emit this->setValueProgress(2,i);
       if(i==0) emit this->fontChanged(font);
   }
+  qDebug() << "Display Line1" << time.elapsed();
+  ui->scrollArea->setWidget(w);
   this->setCursor(Qt::ArrowCursor);
   ui->lineEdit->setEnabled(true);
   ui->buttonTry->setEnabled(true);
+  qDebug() << "Display Line2" << time.elapsed();
 }
 
 void MainWindow::getFonts(int id)
@@ -209,6 +230,8 @@ void MainWindow::openFolder()
     if(!defaultDir.exists())
         defaultPath = QDir::homePath();
     QString dirpath = QFileDialog::getExistingDirectory(this, tr("Open Directory"), defaultPath, QFileDialog::ShowDirsOnly);
+    if(dirpath.isEmpty())
+        return;
     dirpath += "/";
     QDir dir(dirpath);
     files = dir.entryList(QStringList() << "*.ttf" << "*.TTF" << "*.otf" << "*.OTF");
@@ -225,6 +248,11 @@ void MainWindow::openFolder()
 
 void MainWindow::loadFonts()
 {
+    QTime time;
+    time.start();
+    progress->showProgress(0);
+    progress->show();
+    emit setInstallEnabled(true);
     fonts.clear();
     fonts_data.clear();
     database.removeAllApplicationFonts();
@@ -240,15 +268,23 @@ void MainWindow::loadFonts()
     for(int i=0;i<ids.size();i++){
         getFonts(ids.at(i));
     }
+    qDebug() << "Load" << time.elapsed();
     displayAllFont();
 }
 
 void MainWindow::loadDerfaultFont()
 {
+    QTime time;
+    time.start();
+    progress->hideProgress(0);
+    progress->show();
     emit setInstallEnabled(false);
     fonts.clear();
     database.removeAllApplicationFonts();
     QStringList families = database.families();
+    emit this->setMaximumProgress(1,families.size()-1);
+    emit this->setValueProgress(1,0);
+    int k=0;
     foreach(QString family, families){
       QStringList styles = database.styles(family);
       foreach(QString style, styles){
@@ -263,7 +299,11 @@ void MainWindow::loadDerfaultFont()
         f.setBold(bold);
         fonts.push_back(f);
       }
+
+      emit this->setValueProgress(1,k);
+      k++;
     }
+    qDebug() << "Load" << time.elapsed();
     displayAllFont();
 }
 

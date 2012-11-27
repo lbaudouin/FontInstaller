@@ -1,5 +1,6 @@
 FORMS     = mainwindowbase.ui
-HEADERS   = mainwindow.h
+HEADERS   = mainwindow.h \
+    QMultiProgressWidget.h
 SOURCES   = main.cpp \
             mainwindow.cpp
 
