@@ -9,8 +9,6 @@
 #include <QTimer>
 #include <QButtonGroup>
 
-#include "QMultiProgressWidget.h"
-
 class QFontLabel : public QLabel
 {
     Q_OBJECT
