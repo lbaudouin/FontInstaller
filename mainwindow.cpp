@@ -5,6 +5,11 @@ MainWindow::MainWindow(QWidget *parent)
 {
     ui->setupUi(this);
 
+    mainTimer = new QTimer;
+    mainTimer->setInterval(1);
+    mainTimer->setSingleShot(false);
+    connect(mainTimer,SIGNAL(timeout()),this,SLOT(displayOneFont()));
+
     connect(ui->buttonTry,SIGNAL(clicked()),this,SLOT(changeText()));
     connect(ui->lineEdit,SIGNAL(returnPressed()),this,SLOT(changeText()));
     connect(ui->buttonFolder,SIGNAL(clicked()),this,SLOT(openFolder()));
@@ -64,14 +69,6 @@ MainWindow::MainWindow(QWidget *parent)
     buttonLayout->addWidget(buttonQuit);
     connect(buttonQuit,SIGNAL(clicked()),this,SLOT(close()));
     ui->sampleLayout->addLayout( buttonLayout );
-
-    progress = new QMultiProgressWidget(3,QStringList()<<tr("Reading Files")<<tr("Loading Fonts")<<tr("Displaying Fonts"));
-    connect(this,SIGNAL(setTextrogress(int,QString)),progress,SLOT(setText(int,QString)));
-    connect(this,SIGNAL(setMinimumProgress(int,int)),progress,SLOT(setMinimum(int,int)));
-    connect(this,SIGNAL(setMaximumProgress(int,int)),progress,SLOT(setMaximum(int,int)));
-    connect(this,SIGNAL(setValueProgress(int,int)),progress,SLOT(setValue(int,int)));
-    progress->show();
-    progress->hide();
 }
 
 void MainWindow::changeEvent(QEvent *e)
@@ -109,16 +106,13 @@ void MainWindow::pressApply()
     if(nbCols!=newNbCols){
         nbCols = newNbCols;
         if(ui->radioGrid->isChecked())
-            showFontGrid();
+            displayAllFont();
     }
 }
 
-void MainWindow::changeDisplay(int button)
+void MainWindow::changeDisplay(int)
 {
-    if(button==0)
-        showFontGrid();
-    else
-        showFontLine();
+   displayAllFont();
 }
 
 void MainWindow::updateFontCount(int nb)
@@ -134,73 +128,6 @@ void MainWindow::changeText()
 {
      QString text = ui->lineEdit->text().trimmed();
      emit this->textChanged(text);
-}
-
-void MainWindow::showFontGrid()
-{
-    QTime time;
-    time.start();
-    QWidget *w = new QWidget;
-    QGridLayout *layout = new QGridLayout;
-    w->setLayout(layout);
-
-    this->setCursor(Qt::WaitCursor);
-    emit this->setMaximumProgress(2,fonts.size()-1);
-    emit this->setValueProgress(2,0);
-    for(int i=0;i<fonts.size();i++){
-        QFontLabel *fontLabel = new QFontLabel;
-        connect(fontLabel,SIGNAL(selectFont(QFont)),this,SLOT(displayFont(QFont)));
-        connect(this,SIGNAL(setSize(int)),fontLabel,SLOT(setNewSize(int)));
-        QFont font = fonts.at(i);
-        fontLabel->setNewFont( font );
-        fontLabel->setNewSize( currentSize );
-        fontLabel->setToolTip( QString("%1 %2").arg(font.family()).arg(font.styleName()) );
-        fontLabel->setStatusTip( QString("%1 %2").arg(font.family()).arg(font.styleName()) );
-        layout->addWidget(fontLabel,i/nbCols,i%nbCols);
-
-        emit this->setValueProgress(2,i);
-        if(i==0) emit this->fontChanged(font);
-    }
-    qDebug() << "Display Grid1" << time.elapsed();
-    ui->scrollArea->setWidget(w);
-    this->setCursor(Qt::ArrowCursor);
-    ui->lineEdit->setEnabled(true);
-    ui->buttonTry->setEnabled(true);
-    qDebug() << "Display Grid2" << time.elapsed();
-    progress->hide();
-}
-
-void MainWindow::showFontLine(QString text)
-{
-    QTime time;
-    time.start();
-  QWidget *w = new QWidget;
-  QVBoxLayout *layout = new QVBoxLayout;
-  w->setLayout(layout);
-
-  this->setCursor(Qt::WaitCursor);
-  for(int i=0;i<fonts.size();i++){
-      QFontLabel *fontLabel = new QFontLabel;
-      connect(this,SIGNAL(textChanged(QString)),fontLabel,SLOT(setNewText(QString)));
-      connect(fontLabel,SIGNAL(selectFont(QFont)),this,SLOT(displayFont(QFont)));
-      connect(this,SIGNAL(setSize(int)),fontLabel,SLOT(setNewSize(int)));
-      QFont font = fonts.at(i);
-      fontLabel->setNewFont( font );
-      fontLabel->setNewSize( currentSize );
-      fontLabel->setNewText( text.trimmed() );
-      fontLabel->setToolTip( QString("%1 %2").arg(font.family()).arg(font.styleName()) );
-      fontLabel->setStatusTip( QString("%1 %2").arg(font.family()).arg(font.styleName()) );
-      layout->addWidget(fontLabel);
-
-      emit this->setValueProgress(2,i);
-      if(i==0) emit this->fontChanged(font);
-  }
-  qDebug() << "Display Line1" << time.elapsed();
-  ui->scrollArea->setWidget(w);
-  this->setCursor(Qt::ArrowCursor);
-  ui->lineEdit->setEnabled(true);
-  ui->buttonTry->setEnabled(true);
-  qDebug() << "Display Line2" << time.elapsed();
 }
 
 void MainWindow::getFonts(int id)
@@ -248,10 +175,6 @@ void MainWindow::openFolder()
 
 void MainWindow::loadFonts()
 {
-    QTime time;
-    time.start();
-    progress->showProgress(0);
-    progress->show();
     emit setInstallEnabled(true);
     fonts.clear();
     fonts_data.clear();
@@ -268,23 +191,15 @@ void MainWindow::loadFonts()
     for(int i=0;i<ids.size();i++){
         getFonts(ids.at(i));
     }
-    qDebug() << "Load" << time.elapsed();
     displayAllFont();
 }
 
 void MainWindow::loadDerfaultFont()
 {
-    QTime time;
-    time.start();
-    progress->hideProgress(0);
-    progress->show();
     emit setInstallEnabled(false);
     fonts.clear();
     database.removeAllApplicationFonts();
     QStringList families = database.families();
-    emit this->setMaximumProgress(1,families.size()-1);
-    emit this->setValueProgress(1,0);
-    int k=0;
     foreach(QString family, families){
       QStringList styles = database.styles(family);
       foreach(QString style, styles){
@@ -299,21 +214,70 @@ void MainWindow::loadDerfaultFont()
         f.setBold(bold);
         fonts.push_back(f);
       }
-
-      emit this->setValueProgress(1,k);
-      k++;
     }
-    qDebug() << "Load" << time.elapsed();
     displayAllFont();
 }
 
 void MainWindow::displayAllFont()
 {
-    if(ui->radioGrid->isChecked())
-        showFontGrid();
-    else
-        showFontLine();
+    mainTimer->stop();
+    fontsDisplay.clear();
+    QWidget *w = new QWidget;
+
+    if(ui->radioGrid->isChecked()){
+        gridLayout = new QGridLayout;
+        w->setLayout(gridLayout);
+    }else{
+        lineLayout = new QVBoxLayout;
+        w->setLayout(lineLayout);
+    }
+    ui->scrollArea->setWidget(w);
+
+    this->setCursor(Qt::WaitCursor);
+    for(int i=0;i<fonts.size();i++){
+        QFont font = fonts.at(i);
+        FontDisplay f;
+        f.font = font;
+        f.size = currentSize;
+        f.name = QString("%1 %2").arg(font.family()).arg(font.styleName());
+        fontsDisplay.push_back(f);
+
+        if(i==0) emit this->fontChanged(font);
+    }
+    this->setCursor(Qt::ArrowCursor);
+    ui->lineEdit->setEnabled(true);
+    ui->buttonTry->setEnabled(true);
+
+    mainIndex = 0;
+    mainTimer->start();
+
     updateFontCount(fonts.size());
+}
+
+void MainWindow::displayOneFont()
+{
+    if(mainIndex>=fontsDisplay.size()){
+        mainTimer->stop();
+        return;
+    }
+    FontDisplay f = fontsDisplay.at(mainIndex);
+    QFontLabel *fontLabel = new QFontLabel;
+    if(ui->radioLine->isChecked())
+        connect(this,SIGNAL(textChanged(QString)),fontLabel,SLOT(setNewText(QString)));
+    connect(fontLabel,SIGNAL(selectFont(QFont)),this,SLOT(displayFont(QFont)));
+    connect(this,SIGNAL(setSize(int)),fontLabel,SLOT(setNewSize(int)));
+    fontLabel->setNewFont( f.font );
+    fontLabel->setNewSize( f.size );
+    fontLabel->setToolTip( f.name );
+    fontLabel->setStatusTip( f.name );
+    if(ui->radioGrid->isChecked()){
+        gridLayout->addWidget(fontLabel,mainIndex/nbCols,mainIndex%nbCols);
+    }else{
+        lineLayout->addWidget(fontLabel);
+    }
+    mainIndex++;
+    if(mainIndex==fontsDisplay.size())
+        mainTimer->stop();
 }
 
 void MainWindow::install()

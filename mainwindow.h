@@ -49,6 +49,12 @@ private:
     int pointSize;
 };
 
+struct FontDisplay{
+    QFont font;
+    int size;
+    QString name;
+};
+
 struct FontData{
     int id;
     QString file;
@@ -76,16 +82,18 @@ private:
     QList<FontData> fonts_data;
     int nbCols;
     int currentSize;
-    QMultiProgressWidget *progress;
+
+    QList<FontDisplay> fontsDisplay;
+    QGridLayout *gridLayout;
+    QVBoxLayout *lineLayout;
+    QTimer *mainTimer;
+    int mainIndex;
 
 protected:
     void updateFontCount(int nb);
-    void displayAllFont();
 
 public slots:
     void changeText();
-    void showFontLine(QString text = "");
-    void showFontGrid();
     void getFonts(int id);
     void openFolder();
     void loadFonts();
@@ -96,6 +104,9 @@ public slots:
     void displayFont(QFont);
     void changeDisplay(int);
     void pressApply();
+    void displayAllFont();
+
+    void displayOneFont();
 
 signals:
     void textChanged(QString);

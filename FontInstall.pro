@@ -1,10 +1,8 @@
 FORMS     = mainwindowbase.ui
-HEADERS   = mainwindow.h \
-    QMultiProgressWidget.h
+HEADERS   = mainwindow.h
 SOURCES   = main.cpp \
             mainwindow.cpp
 
-RESOURCES += \
-    ressources.qrc
+RESOURCES += ressources.qrc
 TRANSLATIONS = FontInstall_fr.ts
 TARGET = FontInstall
