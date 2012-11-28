@@ -14,6 +14,7 @@ MainWindow::MainWindow(QWidget *parent)
     connect(ui->lineEdit,SIGNAL(returnPressed()),this,SLOT(changeText()));
     connect(ui->buttonFolder,SIGNAL(clicked()),this,SLOT(openFolder()));
     connect(ui->buttonDefault,SIGNAL(clicked()),this,SLOT(loadDerfaultFont()));
+    connect(ui->buttonClear,SIGNAL(clicked()),this,SLOT(clearChoice()));
 
     updateFontCount(0);
     nbCols = 5;
@@ -30,7 +31,13 @@ MainWindow::MainWindow(QWidget *parent)
     ui->lineEdit->setEnabled(false);
     ui->buttonTry->setEnabled(false);
 
-    ui->listView->setVisible(false);
+    ui->widget->setLayout(ui->choiceLayout);
+    ui->widget->setVisible(false);
+    choiceLayout = new QVBoxLayout;
+    ui->scrollAreaChoiceWidget->setLayout(choiceLayout);
+    clearChoice();
+    ui->splitter->setStretchFactor(0,500);
+    ui->splitter->setStretchFactor(1,300);
 
     setOptionsVisible(false);
 
@@ -130,26 +137,6 @@ void MainWindow::changeText()
      emit this->textChanged(text);
 }
 
-void MainWindow::getFonts(int id)
-{
-    QStringList families = database.applicationFontFamilies( id );
-    foreach(QString family, families){
-      QStringList styles = database.styles(family);
-      foreach(QString style, styles){
-        if(style.isEmpty() || style.contains("oblique",Qt::CaseInsensitive))
-            continue;
-
-        int weight = database.weight(family,style);
-        bool italic = database.italic(family,style);
-        bool bold = database.bold(family,style);
-
-        QFont f = QFont(family, 32, weight, italic);
-        f.setBold(bold);
-        fonts.push_back(f);
-      }
-    }
-}
-
 void MainWindow::openFolder()
 {
     QString defaultPath = "./Fonts/";
@@ -179,17 +166,35 @@ void MainWindow::loadFonts()
     fonts.clear();
     fonts_data.clear();
     database.removeAllApplicationFonts();
-    QList<int> ids;
     for(int i=0;i<files.size();i++){
       FontData fd;
       fd.file = files.at(i);
       fd.id = database.addApplicationFont( files.at(i) );
       fd.families = database.applicationFontFamilies( fd.id );
       fonts_data.push_back(fd);
-      ids.push_back(fd.id);
-    }
-    for(int i=0;i<ids.size();i++){
-        getFonts(ids.at(i));
+
+      QStringList families = database.applicationFontFamilies( fd.id );
+      foreach(QString family, families){
+        QStringList styles = database.styles(family);
+        foreach(QString style, styles){
+          if(style.isEmpty() || style.contains("oblique",Qt::CaseInsensitive))
+              continue;
+
+          int weight = database.weight(family,style);
+          bool italic = database.italic(family,style);
+          bool bold = database.bold(family,style);
+
+          QFont f = QFont(family, 32, weight, italic);
+          f.setBold(bold);
+          fonts.push_back(f);
+
+          FontInfo fontInfo;
+          fontInfo.font = f;
+          fontInfo.name = QString("%1 %2").arg(f.family()).arg(f.styleName());
+          fontInfo.file = "";
+          allFonts.push_back(fontInfo);
+        }
+      }
     }
     displayAllFont();
 }
@@ -197,6 +202,7 @@ void MainWindow::loadFonts()
 void MainWindow::loadDerfaultFont()
 {
     emit setInstallEnabled(false);
+    allFonts.clear();
     fonts.clear();
     database.removeAllApplicationFonts();
     QStringList families = database.families();
@@ -213,6 +219,12 @@ void MainWindow::loadDerfaultFont()
         QFont f = QFont(family, 32, weight, italic);
         f.setBold(bold);
         fonts.push_back(f);
+
+        FontInfo fontInfo;
+        fontInfo.font = f;
+        fontInfo.name = QString("%1 %2").arg(f.family()).arg(f.styleName());
+        fontInfo.file = "";
+        allFonts.push_back(fontInfo);
       }
     }
     displayAllFont();
@@ -266,7 +278,8 @@ void MainWindow::displayOneFont()
         connect(this,SIGNAL(textChanged(QString)),fontLabel,SLOT(setNewText(QString)));
     connect(fontLabel,SIGNAL(selectFont(QFont)),this,SLOT(displayFont(QFont)));
     connect(this,SIGNAL(setSize(int)),fontLabel,SLOT(setNewSize(int)));
-    fontLabel->setNewFont( f.font );
+    connect(fontLabel,SIGNAL(choose(FontDisplay)),this,SLOT(addChoice(FontDisplay)));
+    fontLabel->setNewFont( f );
     fontLabel->setNewSize( f.size );
     fontLabel->setToolTip( f.name );
     fontLabel->setStatusTip( f.name );
@@ -293,4 +306,29 @@ void MainWindow::install()
 void MainWindow::displayFont(QFont font)
 {
     emit this->fontChanged(font);
+}
+
+void MainWindow::addChoice(FontDisplay fontInfo)
+{
+    ui->widget->setVisible(true);
+    qDebug() << fontInfo.name;
+    QFontLabel *fontLabel = new QFontLabel;
+    connect(this,SIGNAL(textChanged(QString)),fontLabel,SLOT(setNewText(QString)));
+    connect(fontLabel,SIGNAL(selectFont(QFont)),this,SLOT(displayFont(QFont)));
+    connect(this,SIGNAL(setSize(int)),fontLabel,SLOT(setNewSize(int)));
+    fontLabel->setNewFont( fontInfo );
+    fontLabel->setNewSize( fontInfo.size );
+    fontLabel->setToolTip( fontInfo.name );
+    fontLabel->setStatusTip( fontInfo.name );
+    choiceLayout->addWidget(fontLabel);
+    ui->scrollAreaChoice->setVisible(true);
+}
+
+void MainWindow::clearChoice()
+{
+    qDebug() << "Clear Choice";
+    ui->widget->setVisible(false);
+    choiceLayout = new QVBoxLayout;
+    ui->scrollAreaChoiceWidget;
+    ui->scrollAreaChoiceWidget->setLayout( choiceLayout );
 }

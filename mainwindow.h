@@ -8,6 +8,20 @@
 #include <QFileDialog>
 #include <QTimer>
 #include <QButtonGroup>
+#include <QDebug>
+
+struct FontDisplay{
+    QFont font;
+    int size;
+    QString name;
+    QString file;
+};
+
+struct FontInfo{
+    QFont font;
+    QString name;
+    QString file;
+};
 
 class QFontLabel : public QLabel
 {
@@ -20,16 +34,24 @@ public:
         currentFont.setPointSize(pointSize);
         this->setFont(currentFont);
     }
-    void mousePressEvent(QMouseEvent *){
-        emit this->selectFont(this->font());
+    void mousePressEvent(QMouseEvent *e){
+        if(e->button()==Qt::RightButton)
+            emit this->choose(font_);
+        else
+            emit this->selectFont(this->font());
     }
 public slots:
+    void setNewFont(FontDisplay fontInfo){
+        setNewFont(fontInfo.font);
+        font_ = fontInfo;
+    }
+
     void setNewText(QString text){
         if(text.isEmpty()){
             setNewText("Aa");
-            return;
+        }else{
+            this->setText(text);
         }
-        this->setText(text);
     }
     void setNewFont(QFont font){
         font.setPointSize(pointSize);
@@ -43,14 +65,11 @@ public slots:
     }
 signals:
     void selectFont(QFont);
+    void choose(FontDisplay);
+
 private:
     int pointSize;
-};
-
-struct FontDisplay{
-    QFont font;
-    int size;
-    QString name;
+    FontDisplay font_;
 };
 
 struct FontData{
@@ -81,9 +100,12 @@ private:
     int nbCols;
     int currentSize;
 
+    QList<FontInfo> allFonts;
+
     QList<FontDisplay> fontsDisplay;
     QGridLayout *gridLayout;
     QVBoxLayout *lineLayout;
+    QVBoxLayout *choiceLayout;
     QTimer *mainTimer;
     int mainIndex;
 
@@ -92,7 +114,6 @@ protected:
 
 public slots:
     void changeText();
-    void getFonts(int id);
     void openFolder();
     void loadFonts();
     void loadDerfaultFont();
@@ -106,16 +127,15 @@ public slots:
 
     void displayOneFont();
 
+    void addChoice(FontDisplay fontInfo);
+    void clearChoice();
+
 signals:
     void textChanged(QString);
     void fontChanged(QFont);
     void setInstallEnabled(bool);
     void setSampleSize(int);
     void setSize(int);
-    void setTextProgress(int,QString);
-    void setMinimumProgress(int,int);
-    void setMaximumProgress(int,int);
-    void setValueProgress(int,int);
 };
 
 #endif // MAINWINDOW_H
