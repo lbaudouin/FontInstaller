@@ -31,13 +31,8 @@ MainWindow::MainWindow(QWidget *parent)
     ui->lineEdit->setEnabled(false);
     ui->buttonTry->setEnabled(false);
 
-    ui->widget->setLayout(ui->choiceLayout);
-    ui->widget->setVisible(false);
-    choiceLayout = new QVBoxLayout;
-    ui->scrollAreaChoiceWidget->setLayout(choiceLayout);
     clearChoice();
-    ui->splitter->setStretchFactor(0,500);
-    ui->splitter->setStretchFactor(1,300);
+    ui->splitter->setSizes(QList<int>() << 400 << 100);
 
     setOptionsVisible(false);
 
@@ -329,6 +324,7 @@ void MainWindow::clearChoice()
     qDebug() << "Clear Choice";
     ui->widget->setVisible(false);
     choiceLayout = new QVBoxLayout;
-    ui->scrollAreaChoiceWidget;
-    ui->scrollAreaChoiceWidget->setLayout( choiceLayout );
+    QWidget *w = new QWidget;
+    w->setLayout(choiceLayout);
+    ui->scrollAreaChoice->setWidget(w);
 }
