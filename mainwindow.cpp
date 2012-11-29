@@ -46,6 +46,10 @@ MainWindow::MainWindow(QWidget *parent)
         ui->comboColumns->addItem(QString::number(i));
     ui->comboColumns->setCurrentIndex(3);
 
+    connect(ui->comboSize,SIGNAL(currentIndexChanged(int)),this,SLOT(sizeChanged(int)));
+    connect(ui->comboSampleSize,SIGNAL(currentIndexChanged(int)),this,SLOT(sampleSizeChanged(int)));
+    connect(ui->comboColumns,SIGNAL(currentIndexChanged(int)),this,SLOT(nbColumnsChanged(int)));
+
 
     sample = new QFontLabel("Aa",35);
     connect(this,SIGNAL(textChanged(QString)),sample,SLOT(setNewText(QString)));
@@ -59,7 +63,6 @@ MainWindow::MainWindow(QWidget *parent)
     buttonOptions->setCheckable(true);
     buttonLayout->addWidget(buttonOptions);
     connect(buttonOptions,SIGNAL(toggled(bool)),this,SLOT(setOptionsVisible(bool)));
-    connect(ui->buttonApply,SIGNAL(clicked()),this,SLOT(pressApply()));
     QPushButton *buttonInstall = new QPushButton(tr("Install"));
     buttonInstall->setEnabled(false);
     connect(this,SIGNAL(setInstallEnabled(bool)),buttonInstall,SLOT(setEnabled(bool)));
@@ -93,23 +96,9 @@ void MainWindow::setOptionsVisible(bool visibility)
     ui->comboSize->setVisible(visibility);
     ui->comboSampleSize->setVisible(visibility);
     ui->comboColumns->setVisible(visibility);
-    ui->buttonApply->setVisible(visibility);
     ui->line_1->setVisible(visibility);
     ui->line_2->setVisible(visibility);
     ui->lineOptions->setVisible(visibility);
-}
-
-void MainWindow::pressApply()
-{
-    currentSize = ui->comboSize->currentText().toInt() ;
-    emit this->setSize( currentSize );
-    emit this->setSampleSize( ui->comboSampleSize->currentText().toInt() );
-    int newNbCols = ui->comboColumns->currentText().toInt();
-    if(nbCols!=newNbCols){
-        nbCols = newNbCols;
-        if(ui->radioGrid->isChecked())
-            displayAllFont();
-    }
 }
 
 void MainWindow::changeDisplay(int)
@@ -327,4 +316,26 @@ void MainWindow::clearChoice()
     QWidget *w = new QWidget;
     w->setLayout(choiceLayout);
     ui->scrollAreaChoice->setWidget(w);
+}
+
+
+void MainWindow::sizeChanged(int index)
+{
+  currentSize = index + 7;
+  emit this->setSize( index + 7 );
+}
+
+void MainWindow::sampleSizeChanged(int index)
+{
+  emit this->setSampleSize( index + 7 );
+}
+
+void MainWindow::nbColumnsChanged(int)
+{
+  int newNbCols = ui->comboColumns->currentText().toInt();
+  if(nbCols!=newNbCols){
+      nbCols = newNbCols;
+      if(ui->radioGrid->isChecked())
+          displayAllFont();
+  }
 }

@@ -122,13 +122,16 @@ public slots:
 
     void displayFont(QFont);
     void changeDisplay(int);
-    void pressApply();
     void displayAllFont();
 
     void displayOneFont();
 
     void addChoice(FontDisplay fontInfo);
     void clearChoice();
+
+    void sizeChanged(int);
+    void sampleSizeChanged(int);
+    void nbColumnsChanged(int);
 
 signals:
     void textChanged(QString);

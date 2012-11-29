@@ -73,7 +73,7 @@
     <message>
         <location filename="mainwindowbase.ui" line="133"/>
         <source>Sample size:</source>
-        <translation>Taille (exmple) :</translation>
+        <translation>Taille (exemple) :</translation>
     </message>
     <message>
         <location filename="mainwindowbase.ui" line="150"/>

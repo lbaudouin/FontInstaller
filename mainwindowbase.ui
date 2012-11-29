@@ -106,8 +106,8 @@
          <rect>
           <x>0</x>
           <y>0</y>
-          <width>112</width>
-          <height>165</height>
+          <width>76</width>
+          <height>129</height>
          </rect>
         </property>
        </widget>
@@ -136,8 +136,8 @@
             <rect>
              <x>0</x>
              <y>0</y>
-             <width>642</width>
-             <height>112</height>
+             <width>678</width>
+             <height>76</height>
             </rect>
            </property>
           </widget>
@@ -248,13 +248,6 @@
          </size>
         </property>
        </spacer>
-      </item>
-      <item>
-       <widget class="QPushButton" name="buttonApply">
-        <property name="text">
-         <string>Apply</string>
-        </property>
-       </widget>
       </item>
      </layout>
     </item>
