@@ -1,0 +1,5 @@
+?package(fontinstall):needs="X11" section="Applications/Other"\
+  title="FontInstall" command="/usr/bin/fontinstall"\
+  icon="/usr/share/icons/hicolor/32x32/apps/fontinstall.xpm" \
+  icon16x16="/usr/share/icons/hicolor/16x16/apps/fontinstall.xpm" \
+  icon32x32="/usr/share/icons/hicolor/32x32/apps/fontinstall.xpm"
