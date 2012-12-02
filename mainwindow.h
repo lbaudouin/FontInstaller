@@ -9,16 +9,11 @@
 #include <QTimer>
 #include <QButtonGroup>
 #include <QDebug>
+#include <QProgressDialog>
 
 struct FontDisplay{
     QFont font;
     int size;
-    QString name;
-    QString file;
-};
-
-struct FontInfo{
-    QFont font;
     QString name;
     QString file;
 };
@@ -38,12 +33,17 @@ public:
         if(e->button()==Qt::RightButton)
             emit this->choose(font_);
         else
-            emit this->selectFont(this->font());
+            emit this->selectFont(font_);
     }
+    QString getFile(){
+      return font_.file;
+    }
+
 public slots:
     void setNewFont(FontDisplay fontInfo){
         setNewFont(fontInfo.font);
         font_ = fontInfo;
+        this->setStatusTip( fontInfo.name );
     }
 
     void setNewText(QString text){
@@ -64,7 +64,7 @@ public slots:
         this->setFont(currentFont);
     }
 signals:
-    void selectFont(QFont);
+    void selectFont(FontDisplay);
     void choose(FontDisplay);
 
 private:
@@ -72,11 +72,6 @@ private:
     FontDisplay font_;
 };
 
-struct FontData{
-    int id;
-    QString file;
-    QStringList families;
-};
 
 namespace Ui {
     class MainWindowBase;
@@ -93,37 +88,39 @@ public:
 private:
     Ui::MainWindowBase *ui;
     QFontDatabase database;
-    QList<QFont> fonts;
     QStringList files;
     QFontLabel *sample;
-    QList<FontData> fonts_data;
     int nbCols;
     int currentSize;
 
-    QList<FontInfo> allFonts;
-
     QList<FontDisplay> fontsDisplay;
+    QList<QString> choiceFiles;
     QGridLayout *gridLayout;
     QVBoxLayout *lineLayout;
     QVBoxLayout *choiceLayout;
-    QTimer *mainTimer;
-    int mainIndex;
+    QTimer *timerFile;
+    QTimer *timerDisplay;
+    int indexDisplay;
+    QStringList listFiles;
+    int indexFiles;
+
+    QProgressBar *progressDisplay;
 
 protected:
     void updateFontCount(int nb);
+    void resetDisplay();
 
 public slots:
     void changeText();
     void openFolder();
-    void loadFonts();
     void loadDerfaultFont();
     void install();
     void setOptionsVisible(bool visibility);
 
-    void displayFont(QFont);
+    void displayFont(FontDisplay);
     void changeDisplay(int);
-    void displayAllFont();
 
+    void openOneFile();
     void displayOneFont();
 
     void addChoice(FontDisplay fontInfo);
@@ -135,7 +132,7 @@ public slots:
 
 signals:
     void textChanged(QString);
-    void fontChanged(QFont);
+    void fontChanged(FontDisplay);
     void setInstallEnabled(bool);
     void setSampleSize(int);
     void setSize(int);

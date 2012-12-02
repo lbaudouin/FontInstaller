@@ -5,10 +5,18 @@ MainWindow::MainWindow(QWidget *parent)
 {
     ui->setupUi(this);
 
-    mainTimer = new QTimer;
-    mainTimer->setInterval(1);
-    mainTimer->setSingleShot(false);
-    connect(mainTimer,SIGNAL(timeout()),this,SLOT(displayOneFont()));
+    timerDisplay = new QTimer;
+    timerDisplay->setInterval(1);
+    timerDisplay->setSingleShot(false);
+    connect(timerDisplay,SIGNAL(timeout()),this,SLOT(displayOneFont()));
+    timerFile = new QTimer;
+    timerFile->setInterval(5);
+    timerFile->setSingleShot(false);
+    connect(timerFile,SIGNAL(timeout()),this,SLOT(openOneFile()));
+
+    progressDisplay = new QProgressBar;
+    ui->statusBar->addWidget(progressDisplay);
+    progressDisplay->hide();
 
     connect(ui->buttonTry,SIGNAL(clicked()),this,SLOT(changeText()));
     connect(ui->lineEdit,SIGNAL(returnPressed()),this,SLOT(changeText()));
@@ -17,7 +25,7 @@ MainWindow::MainWindow(QWidget *parent)
     connect(ui->buttonClear,SIGNAL(clicked()),this,SLOT(clearChoice()));
 
     updateFontCount(0);
-    nbCols = 5;
+    nbCols = 10;
     currentSize = 15;
 
     this->setMinimumSize(640,480);
@@ -27,9 +35,6 @@ MainWindow::MainWindow(QWidget *parent)
     buttonGroup->addButton(ui->radioLine,1);
     buttonGroup->setExclusive(true);
     connect(buttonGroup,SIGNAL(buttonClicked(int)),this,SLOT(changeDisplay(int)));
-
-    ui->lineEdit->setEnabled(false);
-    ui->buttonTry->setEnabled(false);
 
     clearChoice();
     ui->splitter->setSizes(QList<int>() << 400 << 100);
@@ -44,7 +49,7 @@ MainWindow::MainWindow(QWidget *parent)
     ui->comboSampleSize->setCurrentIndex(28);
     for(int i=2;i<26;i++)
         ui->comboColumns->addItem(QString::number(i));
-    ui->comboColumns->setCurrentIndex(3);
+    ui->comboColumns->setCurrentIndex(8);
 
     connect(ui->comboSize,SIGNAL(currentIndexChanged(int)),this,SLOT(sizeChanged(int)));
     connect(ui->comboSampleSize,SIGNAL(currentIndexChanged(int)),this,SLOT(sampleSizeChanged(int)));
@@ -53,7 +58,7 @@ MainWindow::MainWindow(QWidget *parent)
 
     sample = new QFontLabel("Aa",35);
     connect(this,SIGNAL(textChanged(QString)),sample,SLOT(setNewText(QString)));
-    connect(this,SIGNAL(fontChanged(QFont)),sample,SLOT(setNewFont(QFont)));
+    connect(this,SIGNAL(fontChanged(FontDisplay)),sample,SLOT(setNewFont(FontDisplay)));
     connect(this,SIGNAL(setSampleSize(int)),sample,SLOT(setNewSize(int)));
     ui->sampleLayout->addWidget(sample);
 
@@ -88,22 +93,31 @@ void MainWindow::changeEvent(QEvent *e)
     }
 }
 
+void MainWindow::resetDisplay()
+{
+  timerDisplay->stop();
+  QWidget *w = new QWidget;
+
+  if(ui->radioGrid->isChecked()){
+      gridLayout = new QGridLayout;
+      w->setLayout(gridLayout);
+  }else{
+      lineLayout = new QVBoxLayout;
+      w->setLayout(lineLayout);
+  }
+  ui->scrollArea->setWidget(w);
+}
+
 void MainWindow::setOptionsVisible(bool visibility)
 {
-    ui->labelSize->setVisible(visibility);
-    ui->labelSampleSize->setVisible(visibility);
-    ui->labelColumns->setVisible(visibility);
-    ui->comboSize->setVisible(visibility);
-    ui->comboSampleSize->setVisible(visibility);
-    ui->comboColumns->setVisible(visibility);
-    ui->line_1->setVisible(visibility);
-    ui->line_2->setVisible(visibility);
-    ui->lineOptions->setVisible(visibility);
+    ui->optionsWidget->setVisible(visibility);
 }
 
 void MainWindow::changeDisplay(int)
 {
-   displayAllFont();
+  resetDisplay();
+  indexDisplay = 0;
+  timerDisplay->start();
 }
 
 void MainWindow::updateFontCount(int nb)
@@ -123,41 +137,38 @@ void MainWindow::changeText()
 
 void MainWindow::openFolder()
 {
+    timerFile->stop();
+    timerDisplay->stop();
     QString defaultPath = "./Fonts/";
     QDir defaultDir(defaultPath);
     if(!defaultDir.exists())
         defaultPath = QDir::homePath();
     QString dirpath = QFileDialog::getExistingDirectory(this, tr("Open Directory"), defaultPath, QFileDialog::ShowDirsOnly);
-    if(dirpath.isEmpty())
+    if(dirpath.isEmpty()){
+        timerFile->start();
+        timerDisplay->start();
         return;
+    }
     dirpath += "/";
     QDir dir(dirpath);
-    files = dir.entryList(QStringList() << "*.ttf" << "*.TTF" << "*.otf" << "*.OTF");
-    for(int i=0;i<files.size();i++){
-        files[i].prepend(dirpath);
+    listFiles = dir.entryList(QStringList() << "*.ttf" << "*.TTF" << "*.otf" << "*.OTF");
+    for(int i=0;i<listFiles.size();i++){
+        listFiles[i].prepend(dirpath);
     }
 
-    emit setInstallEnabled(true);
-    QTimer *timer = new QTimer();
-    timer->setSingleShot(true);
-    connect(timer,SIGNAL(timeout()),this,SLOT(loadFonts()));
-    timer->start(500);
+    resetDisplay();
+    indexDisplay = 0;
+    fontsDisplay.clear();
+    indexFiles = 0;
+    timerFile->start();
 }
 
-void MainWindow::loadFonts()
+void MainWindow::openOneFile()
 {
-    emit setInstallEnabled(true);
-    fonts.clear();
-    fonts_data.clear();
-    database.removeAllApplicationFonts();
-    for(int i=0;i<files.size();i++){
-      FontData fd;
-      fd.file = files.at(i);
-      fd.id = database.addApplicationFont( files.at(i) );
-      fd.families = database.applicationFontFamilies( fd.id );
-      fonts_data.push_back(fd);
-
-      QStringList families = database.applicationFontFamilies( fd.id );
+    if(indexFiles<listFiles.size()){
+      QString file = listFiles.at(indexFiles);
+      int id = database.addApplicationFont( file );
+      QStringList families = database.applicationFontFamilies( id );
       foreach(QString family, families){
         QStringList styles = database.styles(family);
         foreach(QString style, styles){
@@ -168,28 +179,34 @@ void MainWindow::loadFonts()
           bool italic = database.italic(family,style);
           bool bold = database.bold(family,style);
 
-          QFont f = QFont(family, 32, weight, italic);
-          f.setBold(bold);
-          fonts.push_back(f);
+          FontDisplay f;
+          f.file = file;
+          f.font = QFont(family, 32, weight, italic);
+          f.font.setBold(bold);
+          f.size = currentSize;
+          f.name = QString("%1 %2").arg(f.font.family()).arg(f.font.styleName());
+          fontsDisplay.push_back(f);
 
-          FontInfo fontInfo;
-          fontInfo.font = f;
-          fontInfo.name = QString("%1 %2").arg(f.family()).arg(f.styleName());
-          fontInfo.file = "";
-          allFonts.push_back(fontInfo);
+          if(!timerDisplay->isActive())
+            timerDisplay->start();
         }
       }
+      indexFiles++;
+      updateFontCount(fontsDisplay.size());
+    }else{
+        timerFile->stop();
     }
-    displayAllFont();
 }
 
 void MainWindow::loadDerfaultFont()
 {
-    emit setInstallEnabled(false);
-    allFonts.clear();
-    fonts.clear();
+    resetDisplay();
+    indexDisplay = 0;
+    fontsDisplay.clear();
     database.removeAllApplicationFonts();
+
     QStringList families = database.families();
+
     foreach(QString family, families){
       QStringList styles = database.styles(family);
       foreach(QString style, styles){
@@ -200,105 +217,77 @@ void MainWindow::loadDerfaultFont()
         bool italic = database.italic(family,style);
         bool bold = database.bold(family,style);
 
-        QFont f = QFont(family, 32, weight, italic);
-        f.setBold(bold);
-        fonts.push_back(f);
-
-        FontInfo fontInfo;
-        fontInfo.font = f;
-        fontInfo.name = QString("%1 %2").arg(f.family()).arg(f.styleName());
-        fontInfo.file = "";
-        allFonts.push_back(fontInfo);
-      }
-    }
-    displayAllFont();
-}
-
-void MainWindow::displayAllFont()
-{
-    mainTimer->stop();
-    fontsDisplay.clear();
-    QWidget *w = new QWidget;
-
-    if(ui->radioGrid->isChecked()){
-        gridLayout = new QGridLayout;
-        w->setLayout(gridLayout);
-    }else{
-        lineLayout = new QVBoxLayout;
-        w->setLayout(lineLayout);
-    }
-    ui->scrollArea->setWidget(w);
-
-    this->setCursor(Qt::WaitCursor);
-    for(int i=0;i<fonts.size();i++){
-        QFont font = fonts.at(i);
         FontDisplay f;
-        f.font = font;
+        f.file = "";
+        f.font = QFont(family, 32, weight, italic);
+        f.font.setBold(bold);
         f.size = currentSize;
-        f.name = QString("%1 %2").arg(font.family()).arg(font.styleName());
+        f.name = QString("%1 %2").arg(f.font.family()).arg(f.font.styleName());
         fontsDisplay.push_back(f);
 
-        if(i==0) emit this->fontChanged(font);
+        if(!timerDisplay->isActive())
+          timerDisplay->start();
+      }
     }
-    this->setCursor(Qt::ArrowCursor);
-    ui->lineEdit->setEnabled(true);
-    ui->buttonTry->setEnabled(true);
-
-    mainIndex = 0;
-    mainTimer->start();
-
-    updateFontCount(fonts.size());
+    updateFontCount(fontsDisplay.size());
+    for(int i=0;i<choiceFiles.size();i++)
+      database.addApplicationFont( choiceFiles.at(i) );
 }
 
 void MainWindow::displayOneFont()
 {
-    if(mainIndex>=fontsDisplay.size()){
-        mainTimer->stop();
+    if(indexDisplay<fontsDisplay.size()){
+      FontDisplay f = fontsDisplay.at(indexDisplay);
+      QFontLabel *fontLabel = new QFontLabel;
+      if(ui->radioLine->isChecked())
+          connect(this,SIGNAL(textChanged(QString)),fontLabel,SLOT(setNewText(QString)));
+      connect(fontLabel,SIGNAL(selectFont(FontDisplay)),this,SLOT(displayFont(FontDisplay)));
+      connect(this,SIGNAL(setSize(int)),fontLabel,SLOT(setNewSize(int)));
+      connect(fontLabel,SIGNAL(choose(FontDisplay)),this,SLOT(addChoice(FontDisplay)));
+      fontLabel->setNewFont( f );
+      fontLabel->setNewSize( f.size );
+      fontLabel->setToolTip( f.name );
+      fontLabel->setStatusTip( f.name );
+      if(ui->radioGrid->isChecked()){
+          gridLayout->addWidget(fontLabel,indexDisplay/nbCols,indexDisplay%nbCols);
+      }else{
+          lineLayout->addWidget(fontLabel);
+      }
+      progressDisplay->setValue(indexDisplay);
+      indexDisplay++;
+      if(indexDisplay==fontsDisplay.size()){
+          progressDisplay->hide();
+          timerDisplay->stop();
+      }
+    }else{
+        progressDisplay->hide();
+        timerDisplay->stop();
         return;
     }
-    FontDisplay f = fontsDisplay.at(mainIndex);
-    QFontLabel *fontLabel = new QFontLabel;
-    if(ui->radioLine->isChecked())
-        connect(this,SIGNAL(textChanged(QString)),fontLabel,SLOT(setNewText(QString)));
-    connect(fontLabel,SIGNAL(selectFont(QFont)),this,SLOT(displayFont(QFont)));
-    connect(this,SIGNAL(setSize(int)),fontLabel,SLOT(setNewSize(int)));
-    connect(fontLabel,SIGNAL(choose(FontDisplay)),this,SLOT(addChoice(FontDisplay)));
-    fontLabel->setNewFont( f );
-    fontLabel->setNewSize( f.size );
-    fontLabel->setToolTip( f.name );
-    fontLabel->setStatusTip( f.name );
-    if(ui->radioGrid->isChecked()){
-        gridLayout->addWidget(fontLabel,mainIndex/nbCols,mainIndex%nbCols);
-    }else{
-        lineLayout->addWidget(fontLabel);
-    }
-    mainIndex++;
-    if(mainIndex==fontsDisplay.size())
-        mainTimer->stop();
 }
 
 void MainWindow::install()
 {
-    QString family = sample->font().family();
-    for(int i=0;i<fonts_data.size();i++){
-        if(fonts_data.at(i).families.contains(family)){
-            QDesktopServices::openUrl(QUrl("file:///" + fonts_data.at(i).file, QUrl::TolerantMode));
-        }
+    QString file = sample->getFile();
+    if(QFile::exists(file)){
+        QDesktopServices::openUrl(QUrl("file:///" + file, QUrl::TolerantMode));
     }
 }
 
-void MainWindow::displayFont(QFont font)
+void MainWindow::displayFont(FontDisplay fontInfo)
 {
-    emit this->fontChanged(font);
+    sample->setNewFont(fontInfo);
+    emit this->setInstallEnabled(!fontInfo.file.isEmpty());
 }
 
 void MainWindow::addChoice(FontDisplay fontInfo)
 {
     ui->widget->setVisible(true);
     qDebug() << fontInfo.name;
+    choiceFiles.push_back(fontInfo.file);
     QFontLabel *fontLabel = new QFontLabel;
     connect(this,SIGNAL(textChanged(QString)),fontLabel,SLOT(setNewText(QString)));
-    connect(fontLabel,SIGNAL(selectFont(QFont)),this,SLOT(displayFont(QFont)));
+    connect(fontLabel,SIGNAL(selectFont(FontDisplay)),this,SLOT(displayFont(FontDisplay)));
     connect(this,SIGNAL(setSize(int)),fontLabel,SLOT(setNewSize(int)));
     fontLabel->setNewFont( fontInfo );
     fontLabel->setNewSize( fontInfo.size );
@@ -310,7 +299,7 @@ void MainWindow::addChoice(FontDisplay fontInfo)
 
 void MainWindow::clearChoice()
 {
-    qDebug() << "Clear Choice";
+    choiceFiles.clear();
     ui->widget->setVisible(false);
     choiceLayout = new QVBoxLayout;
     QWidget *w = new QWidget;
@@ -336,6 +325,6 @@ void MainWindow::nbColumnsChanged(int)
   if(nbCols!=newNbCols){
       nbCols = newNbCols;
       if(ui->radioGrid->isChecked())
-          displayAllFont();
+        changeDisplay(0);
   }
 }
