@@ -11,6 +11,8 @@
 #include <QDebug>
 #include <QProgressDialog>
 
+#include <QRawFont>
+
 struct FontDisplay{
     QFont font;
     int size;

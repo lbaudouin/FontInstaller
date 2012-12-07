@@ -185,7 +185,14 @@ void MainWindow::openOneFile()
           f.font.setBold(bold);
           f.size = currentSize;
           f.name = QString("%1 %2").arg(f.font.family()).arg(f.font.styleName());
-          fontsDisplay.push_back(f);
+
+          QChar c = QString::fromUtf8("é").at(0);
+          QRawFont rf = QRawFont::fromFont(f.font);
+          if(!rf.supportsCharacter(c)){
+            qDebug() << "No accent !" << f.file;
+          }else{
+            fontsDisplay.push_back(f);
+          }
 
           if(!timerDisplay->isActive())
             timerDisplay->start();
@@ -223,7 +230,15 @@ void MainWindow::loadDerfaultFont()
         f.font.setBold(bold);
         f.size = currentSize;
         f.name = QString("%1 %2").arg(f.font.family()).arg(f.font.styleName());
-        fontsDisplay.push_back(f);
+
+        QChar c = QString::fromUtf8("é").at(0);
+        QRawFont rf = QRawFont::fromFont(f.font);
+        if(!rf.supportsCharacter(c)){
+          qDebug() << "No accent !" << f.name;
+        }else{
+          fontsDisplay.push_back(f);
+        }
+
 
         if(!timerDisplay->isActive())
           timerDisplay->start();
