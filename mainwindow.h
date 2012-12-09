@@ -58,6 +58,7 @@ public slots:
     void setNewFont(QFont font){
         font.setPointSize(pointSize);
         this->setFont(font);
+        rf_ = QRawFont::fromFont(font);
     }
     void setNewSize(int size){
         pointSize = size;
@@ -65,6 +66,16 @@ public slots:
         currentFont.setPointSize(pointSize);
         this->setFont(currentFont);
     }
+    void need(QString text){
+      for(int i=0;i<text.size();i++){
+        if(!rf_.supportsCharacter(text.at(i))){
+          this->setVisible(false);
+          return;
+        }
+      }
+      this->setVisible(true);
+    }
+
 signals:
     void selectFont(FontDisplay);
     void choose(FontDisplay);
@@ -72,6 +83,7 @@ signals:
 private:
     int pointSize;
     FontDisplay font_;
+    QRawFont rf_;
 };
 
 
@@ -115,7 +127,7 @@ protected:
 public slots:
     void changeText();
     void openFolder();
-    void loadDerfaultFont();
+    void loadDefaultFont();
     void install();
     void setOptionsVisible(bool visibility);
 
@@ -131,6 +143,7 @@ public slots:
     void sizeChanged(int);
     void sampleSizeChanged(int);
     void nbColumnsChanged(int);
+    void textNeededChanded(QString);
 
 signals:
     void textChanged(QString);
@@ -138,6 +151,7 @@ signals:
     void setInstallEnabled(bool);
     void setSampleSize(int);
     void setSize(int);
+    void needText(QString);
 };
 
 #endif // MAINWINDOW_H

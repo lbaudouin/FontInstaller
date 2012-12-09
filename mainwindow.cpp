@@ -21,7 +21,7 @@ MainWindow::MainWindow(QWidget *parent)
     connect(ui->buttonTry,SIGNAL(clicked()),this,SLOT(changeText()));
     connect(ui->lineEdit,SIGNAL(returnPressed()),this,SLOT(changeText()));
     connect(ui->buttonFolder,SIGNAL(clicked()),this,SLOT(openFolder()));
-    connect(ui->buttonDefault,SIGNAL(clicked()),this,SLOT(loadDerfaultFont()));
+    connect(ui->buttonDefault,SIGNAL(clicked()),this,SLOT(loadDefaultFont()));
     connect(ui->buttonClear,SIGNAL(clicked()),this,SLOT(clearChoice()));
 
     updateFontCount(0);
@@ -30,17 +30,19 @@ MainWindow::MainWindow(QWidget *parent)
 
     this->setMinimumSize(640,480);
 
+    //Display mode
     QButtonGroup *buttonGroup = new QButtonGroup;
     buttonGroup->addButton(ui->radioGrid,0);
     buttonGroup->addButton(ui->radioLine,1);
     buttonGroup->setExclusive(true);
     connect(buttonGroup,SIGNAL(buttonClicked(int)),this,SLOT(changeDisplay(int)));
 
+    //Choice
     clearChoice();
     ui->splitter->setSizes(QList<int>() << 400 << 100);
 
+    //Options
     setOptionsVisible(false);
-
     for(int i=7;i<31;i++)
         ui->comboSize->addItem(QString::number(i));
     ui->comboSize->setCurrentIndex(8);
@@ -54,31 +56,19 @@ MainWindow::MainWindow(QWidget *parent)
     connect(ui->comboSize,SIGNAL(currentIndexChanged(int)),this,SLOT(sizeChanged(int)));
     connect(ui->comboSampleSize,SIGNAL(currentIndexChanged(int)),this,SLOT(sampleSizeChanged(int)));
     connect(ui->comboColumns,SIGNAL(currentIndexChanged(int)),this,SLOT(nbColumnsChanged(int)));
+    connect(ui->editNeed,SIGNAL(textChanged(QString)),this,SLOT(textNeededChanded(QString)));
 
-
+    //Sample
     sample = new QFontLabel("Aa",35);
     connect(this,SIGNAL(textChanged(QString)),sample,SLOT(setNewText(QString)));
     connect(this,SIGNAL(fontChanged(FontDisplay)),sample,SLOT(setNewFont(FontDisplay)));
     connect(this,SIGNAL(setSampleSize(int)),sample,SLOT(setNewSize(int)));
-    ui->sampleLayout->addWidget(sample);
+    ui->scrollSample->setWidget(sample);
 
-    QVBoxLayout *buttonLayout = new QVBoxLayout;
-    QPushButton *buttonOptions = new QPushButton(tr("Options"));
-    buttonOptions->setSizePolicy(QSizePolicy::Maximum,QSizePolicy::Fixed);
-    buttonOptions->setCheckable(true);
-    buttonLayout->addWidget(buttonOptions);
-    connect(buttonOptions,SIGNAL(toggled(bool)),this,SLOT(setOptionsVisible(bool)));
-    QPushButton *buttonInstall = new QPushButton(tr("Install"));
-    buttonInstall->setEnabled(false);
-    connect(this,SIGNAL(setInstallEnabled(bool)),buttonInstall,SLOT(setEnabled(bool)));
-    buttonInstall->setSizePolicy(QSizePolicy::Maximum,QSizePolicy::Fixed);
-    buttonLayout->addWidget(buttonInstall);
-    connect(buttonInstall,SIGNAL(clicked()),this,SLOT(install()));
-    QPushButton *buttonQuit = new QPushButton(tr("Quit"));
-    buttonQuit->setSizePolicy(QSizePolicy::Maximum,QSizePolicy::Fixed);
-    buttonLayout->addWidget(buttonQuit);
-    connect(buttonQuit,SIGNAL(clicked()),this,SLOT(close()));
-    ui->sampleLayout->addLayout( buttonLayout );
+    connect(ui->buttonOptions,SIGNAL(toggled(bool)),this,SLOT(setOptionsVisible(bool)));
+    connect(this,SIGNAL(setInstallEnabled(bool)),ui->buttonInstall,SLOT(setEnabled(bool)));
+    connect(ui->buttonInstall,SIGNAL(clicked()),this,SLOT(install()));
+    connect(ui->buttonQuit,SIGNAL(clicked()),this,SLOT(close()));
 }
 
 void MainWindow::changeEvent(QEvent *e)
@@ -185,14 +175,15 @@ void MainWindow::openOneFile()
           f.font.setBold(bold);
           f.size = currentSize;
           f.name = QString("%1 %2").arg(f.font.family()).arg(f.font.styleName());
+          fontsDisplay.push_back(f);
 
-          QChar c = QString::fromUtf8("é").at(0);
+          /*QChar c = QString::fromUtf8("é").at(0);
           QRawFont rf = QRawFont::fromFont(f.font);
           if(!rf.supportsCharacter(c)){
             qDebug() << "No accent !" << f.file;
           }else{
             fontsDisplay.push_back(f);
-          }
+          }*/
 
           if(!timerDisplay->isActive())
             timerDisplay->start();
@@ -205,7 +196,7 @@ void MainWindow::openOneFile()
     }
 }
 
-void MainWindow::loadDerfaultFont()
+void MainWindow::loadDefaultFont()
 {
     resetDisplay();
     indexDisplay = 0;
@@ -231,14 +222,7 @@ void MainWindow::loadDerfaultFont()
         f.size = currentSize;
         f.name = QString("%1 %2").arg(f.font.family()).arg(f.font.styleName());
 
-        QChar c = QString::fromUtf8("é").at(0);
-        QRawFont rf = QRawFont::fromFont(f.font);
-        if(!rf.supportsCharacter(c)){
-          qDebug() << "No accent !" << f.name;
-        }else{
-          fontsDisplay.push_back(f);
-        }
-
+        fontsDisplay.push_back(f);
 
         if(!timerDisplay->isActive())
           timerDisplay->start();
@@ -259,14 +243,17 @@ void MainWindow::displayOneFont()
       connect(fontLabel,SIGNAL(selectFont(FontDisplay)),this,SLOT(displayFont(FontDisplay)));
       connect(this,SIGNAL(setSize(int)),fontLabel,SLOT(setNewSize(int)));
       connect(fontLabel,SIGNAL(choose(FontDisplay)),this,SLOT(addChoice(FontDisplay)));
+      connect(this,SIGNAL(needText(QString)),fontLabel,SLOT(need(QString)));
       fontLabel->setNewFont( f );
       fontLabel->setNewSize( f.size );
       fontLabel->setToolTip( f.name );
       fontLabel->setStatusTip( f.name );
+      fontLabel->need( ui->editNeed->text() );
       if(ui->radioGrid->isChecked()){
           gridLayout->addWidget(fontLabel,indexDisplay/nbCols,indexDisplay%nbCols);
       }else{
           lineLayout->addWidget(fontLabel);
+          fontLabel->setNewText(ui->lineEdit->text());
       }
       progressDisplay->setValue(indexDisplay);
       indexDisplay++;
@@ -342,4 +329,9 @@ void MainWindow::nbColumnsChanged(int)
       if(ui->radioGrid->isChecked())
         changeDisplay(0);
   }
+}
+
+void MainWindow::textNeededChanded(QString text)
+{
+  emit this->needText(text);
 }
