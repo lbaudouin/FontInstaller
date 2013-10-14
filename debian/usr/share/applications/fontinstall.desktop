@@ -1,9 +1,0 @@
-[Desktop Entry]
-Name=Font Install
-Name[fr_FR]=Installeur de polices
-Comment=Select and install fonts
-Comment[fr_FR]=Choisir et installer des polices
-Exec=/usr/bin/fontinstall
-Icon=/usr/share/icons/hicolor/128x128/apps/fontinstall.xpm
-Type=Application
-Categories=Utility;

@@ -1,8 +1,8 @@
 <RCC>
     <qresource prefix="/lang">
-        <file alias="lang_fr">FontInstall_fr.qm</file>
+        <file alias="lang_fr">fontinstaller_fr.qm</file>
     </qresource>
     <qresource prefix="/images">
-        <file alias="icon">images/fontinstall.png</file>
+        <file alias="icon">images/fontinstaller.png</file>
     </qresource>
 </RCC>

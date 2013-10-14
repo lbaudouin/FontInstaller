@@ -13,6 +13,8 @@
 
 #include <QRawFont>
 
+#define VERSION "0.1.0"
+
 struct FontDisplay{
     QFont font;
     int size;

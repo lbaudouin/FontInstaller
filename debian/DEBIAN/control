@@ -1,9 +1,0 @@
-Package: fontinstall
-Version: 1.0.0
-Section: base
-Priority: optional
-Architecture: all
-Depends: libqtcore4,libqtgui4,libqt4-sql-sqlite,libqt4-xml,libqt4-network
-Installed-Size: 104
-Maintainer: killo <ze_killotron@hotmail.com>
-Description: Select and install fonts

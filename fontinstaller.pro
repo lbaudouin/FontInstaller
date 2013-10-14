@@ -4,5 +4,5 @@ SOURCES   = main.cpp \
             mainwindow.cpp
 
 RESOURCES += ressources.qrc
-TRANSLATIONS = FontInstall_fr.ts
-TARGET = FontInstall
+TRANSLATIONS = fontinstaller_fr.ts
+TARGET = fontinstaller

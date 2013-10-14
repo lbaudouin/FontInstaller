@@ -1,0 +1,12 @@
+
+[Desktop Entry]
+Name=FontInstaller
+Name[fr_FR]=Installeur de polices
+Comment=Display and install fonts
+Comment[fr_FR]=Affiche et installe des polices
+Exec=fontinstaller
+Icon=fontinstaller
+Type=Application
+Terminal=false
+MimeType=application/x-font-ttf;application/x-font-otf;
+Categories=Office;
