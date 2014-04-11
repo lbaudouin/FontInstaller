@@ -1,7 +1,10 @@
-FORMS     = mainwindowbase.ui
-HEADERS   = mainwindow.h
+FORMS     = \
+    mainwindow.ui
+HEADERS   = mainwindow.h \
+    qfontlabel.h
 SOURCES   = main.cpp \
-            mainwindow.cpp
+            mainwindow.cpp \
+    qfontlabel.cpp
 
 RESOURCES += ressources.qrc
 TRANSLATIONS = fontinstaller_fr.ts

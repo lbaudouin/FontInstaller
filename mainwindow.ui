@@ -1,17 +1,17 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>MainWindowBase</class>
- <widget class="QMainWindow" name="MainWindowBase">
+ <class>MainWindow</class>
+ <widget class="QMainWindow" name="MainWindow">
   <property name="geometry">
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>882</width>
-    <height>462</height>
+    <width>1024</width>
+    <height>750</height>
    </rect>
   </property>
   <property name="windowTitle">
-   <string notr="true">Font Install</string>
+   <string notr="true">Font Installer</string>
   </property>
   <property name="windowIcon">
    <iconset resource="ressources.qrc">
@@ -83,111 +83,42 @@
         </property>
        </widget>
       </item>
-      <item>
-       <widget class="QPushButton" name="buttonTry">
-        <property name="text">
-         <string>Try</string>
-        </property>
-       </widget>
-      </item>
      </layout>
     </item>
     <item>
-     <widget class="QSplitter" name="splitter">
-      <property name="orientation">
-       <enum>Qt::Horizontal</enum>
+     <widget class="QTreeWidget" name="treeWidget">
+      <property name="selectionMode">
+       <enum>QAbstractItemView::SingleSelection</enum>
       </property>
-      <widget class="QScrollArea" name="scrollArea">
-       <property name="widgetResizable">
-        <bool>true</bool>
+      <property name="textElideMode">
+       <enum>Qt::ElideNone</enum>
+      </property>
+      <column>
+       <property name="text">
+        <string>Font</string>
        </property>
-       <widget class="QWidget" name="scrollAreaWidgetContents">
-        <property name="geometry">
-         <rect>
-          <x>0</x>
-          <y>0</y>
-          <width>112</width>
-          <height>165</height>
-         </rect>
-        </property>
-       </widget>
-      </widget>
-      <widget class="QWidget" name="widget" native="true">
-       <property name="sizePolicy">
-        <sizepolicy hsizetype="Minimum" vsizetype="Expanding">
-         <horstretch>0</horstretch>
-         <verstretch>0</verstretch>
-        </sizepolicy>
+      </column>
+      <column>
+       <property name="text">
+        <string>Sample</string>
        </property>
-       <property name="baseSize">
-        <size>
-         <width>0</width>
-         <height>0</height>
-        </size>
-       </property>
-       <layout class="QVBoxLayout" name="verticalLayout_2">
-        <item>
-         <widget class="QScrollArea" name="scrollAreaChoice">
-          <property name="widgetResizable">
-           <bool>true</bool>
-          </property>
-          <widget class="QWidget" name="scrollAreaChoiceWidget">
-           <property name="geometry">
-            <rect>
-             <x>0</x>
-             <y>0</y>
-             <width>724</width>
-             <height>112</height>
-            </rect>
-           </property>
-          </widget>
-         </widget>
-        </item>
-        <item>
-         <layout class="QHBoxLayout" name="horizontalLayout">
-          <item>
-           <spacer name="horizontalSpacer_left">
-            <property name="orientation">
-             <enum>Qt::Horizontal</enum>
-            </property>
-            <property name="sizeHint" stdset="0">
-             <size>
-              <width>40</width>
-              <height>20</height>
-             </size>
-            </property>
-           </spacer>
-          </item>
-          <item>
-           <widget class="QPushButton" name="buttonClear">
-            <property name="sizePolicy">
-             <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
-              <horstretch>0</horstretch>
-              <verstretch>0</verstretch>
-             </sizepolicy>
-            </property>
-            <property name="text">
-             <string>Clear</string>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <spacer name="horizontalSpacer_right">
-            <property name="orientation">
-             <enum>Qt::Horizontal</enum>
-            </property>
-            <property name="sizeHint" stdset="0">
-             <size>
-              <width>40</width>
-              <height>20</height>
-             </size>
-            </property>
-           </spacer>
-          </item>
-         </layout>
-        </item>
-       </layout>
-      </widget>
+      </column>
+     </widget>
+    </item>
+    <item>
+     <widget class="QTableWidget" name="tableWidget">
+      <property name="selectionMode">
+       <enum>QAbstractItemView::SingleSelection</enum>
+      </property>
+      <property name="textElideMode">
+       <enum>Qt::ElideNone</enum>
+      </property>
+      <attribute name="horizontalHeaderVisible">
+       <bool>false</bool>
+      </attribute>
+      <attribute name="verticalHeaderVisible">
+       <bool>false</bool>
+      </attribute>
      </widget>
     </item>
     <item>
@@ -255,7 +186,7 @@
          <item>
           <widget class="QLabel" name="labelNeed">
            <property name="text">
-            <string>Need:</string>
+            <string>Special character:</string>
            </property>
           </widget>
          </item>
@@ -305,8 +236,8 @@
           <rect>
            <x>0</x>
            <y>0</y>
-           <width>767</width>
-           <height>112</height>
+           <width>896</width>
+           <height>126</height>
           </rect>
          </property>
         </widget>
@@ -321,6 +252,13 @@
           </property>
           <property name="checkable">
            <bool>true</bool>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="pushButton">
+          <property name="text">
+           <string>PushButton</string>
           </property>
          </widget>
         </item>
