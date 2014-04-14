@@ -30,14 +30,14 @@
     </message>
     <message>
         <location filename="mainwindow.ui" line="108"/>
-        <location filename="mainwindow.ui" line="339"/>
+        <location filename="mainwindow.ui" line="322"/>
         <source>Font</source>
         <translation>Police</translation>
     </message>
     <message>
         <location filename="mainwindow.ui" line="113"/>
-        <location filename="mainwindow.ui" line="259"/>
-        <location filename="mainwindow.ui" line="344"/>
+        <location filename="mainwindow.ui" line="242"/>
+        <location filename="mainwindow.ui" line="327"/>
         <source>Sample</source>
         <translation>Exemple</translation>
     </message>
@@ -52,45 +52,89 @@
         <translation>Taille (exemple) :</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="182"/>
-        <source>Columns:</source>
-        <translation>Colonnes :</translation>
+        <location filename="mainwindow.ui" line="388"/>
+        <source>&amp;Menu</source>
+        <translation>&amp;Menu</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="199"/>
+        <location filename="mainwindow.ui" line="397"/>
+        <source>?</source>
+        <translation>?</translation>
+    </message>
+    <message>
+        <location filename="mainwindow.ui" line="406"/>
+        <source>&amp;Default Fonts</source>
+        <translation>Police par &amp;défaut</translation>
+    </message>
+    <message>
+        <location filename="mainwindow.ui" line="409"/>
+        <source>Ctrl+D</source>
+        <translation>Ctrl+D</translation>
+    </message>
+    <message>
+        <location filename="mainwindow.ui" line="414"/>
+        <source>&amp;Open folder</source>
+        <translation>&amp;Ouvrir un répertoire</translation>
+    </message>
+    <message>
+        <location filename="mainwindow.ui" line="417"/>
+        <source>Ctrl+O</source>
+        <translation>Ctrl+O</translation>
+    </message>
+    <message>
+        <location filename="mainwindow.ui" line="422"/>
+        <source>&amp;Quit</source>
+        <translation>&amp;Quitter</translation>
+    </message>
+    <message>
+        <location filename="mainwindow.ui" line="425"/>
+        <source>Ctrl+Q</source>
+        <translation>Ctrl+Q</translation>
+    </message>
+    <message>
+        <location filename="mainwindow.ui" line="430"/>
+        <source>&amp;About</source>
+        <translation>&amp;A propos</translation>
+    </message>
+    <message>
+        <source>Columns:</source>
+        <translation type="obsolete">Colonnes :</translation>
+    </message>
+    <message>
+        <location filename="mainwindow.ui" line="182"/>
         <source>Special character:</source>
         <translation>Caractères spéciaux :</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="276"/>
+        <location filename="mainwindow.ui" line="259"/>
         <source>Font name</source>
         <translation>Nom de la police</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="287"/>
+        <location filename="mainwindow.ui" line="270"/>
         <source>Options</source>
         <translation>Options</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="297"/>
-        <location filename="mainwindow.ui" line="326"/>
+        <location filename="mainwindow.ui" line="280"/>
+        <location filename="mainwindow.ui" line="309"/>
         <source>Compare</source>
         <translation>Comparer</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="304"/>
-        <location filename="mainwindow.ui" line="361"/>
+        <location filename="mainwindow.ui" line="287"/>
+        <location filename="mainwindow.ui" line="344"/>
         <source>Install</source>
         <translation>Installer</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="311"/>
-        <location filename="mainwindow.ui" line="381"/>
+        <location filename="mainwindow.ui" line="294"/>
+        <location filename="mainwindow.ui" line="364"/>
         <source>Quit</source>
         <translation>Quitter</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="354"/>
+        <location filename="mainwindow.ui" line="337"/>
         <source>Remove</source>
         <translation>Retirer</translation>
     </message>
@@ -99,46 +143,46 @@
         <translation type="obsolete">Font Install</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="90"/>
+        <location filename="mainwindow.cpp" line="145"/>
         <source>Font Installer</source>
         <translation>Font Installer</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="92"/>
+        <location filename="mainwindow.cpp" line="147"/>
         <source>fonts</source>
         <translation>polices</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="111"/>
+        <location filename="mainwindow.cpp" line="166"/>
         <source>Applying</source>
         <translation>Application en cours</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="140"/>
+        <location filename="mainwindow.cpp" line="195"/>
         <source>Open Directory</source>
         <translation>Ouvrir un répertoire</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="259"/>
-        <location filename="mainwindow.cpp" line="519"/>
+        <location filename="mainwindow.cpp" line="223"/>
+        <location filename="mainwindow.cpp" line="491"/>
         <source>Loading</source>
         <translation>Chargement</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="259"/>
-        <location filename="mainwindow.cpp" line="418"/>
-        <location filename="mainwindow.cpp" line="519"/>
+        <location filename="mainwindow.cpp" line="223"/>
+        <location filename="mainwindow.cpp" line="389"/>
+        <location filename="mainwindow.cpp" line="491"/>
         <source>Cancel</source>
         <translation>Annuler</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="418"/>
+        <location filename="mainwindow.cpp" line="389"/>
         <source>Displaying</source>
         <translation>Affichage en cours</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="678"/>
-        <location filename="mainwindow.cpp" line="786"/>
+        <location filename="mainwindow.cpp" line="638"/>
+        <location filename="mainwindow.cpp" line="740"/>
         <source>Compare (%1)</source>
         <translation>Comparer (%1)</translation>
     </message>

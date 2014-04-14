@@ -19,11 +19,14 @@
 #include <QTableWidgetItem>
 
 #include <QEventLoop>
+#include <QResizeEvent>
 
 #include <QFontDatabase>
 
 #include <QThreadPool>
 #include <QRunnable>
+
+#include <QSettings>
 
 #define VERSION "0.1.0"
 
@@ -49,11 +52,6 @@ struct FontFileInfo{
     int id;
 };
 
-inline bool operator<(const FontFamilyInfo &key1, const FontFamilyInfo &key2)
-{
-    return key1.family < key2.family;
-}
-
 class MainWindow : public QMainWindow
 {
     Q_OBJECT
@@ -65,8 +63,6 @@ public:
 private:
     Ui::MainWindow *ui;
 
-    int nbCols;
-
     bool needToUpdateText;
 
     QString selectedFileName;
@@ -77,11 +73,16 @@ protected:
 
     void applyText();
 
+    void resizeEvent(QResizeEvent *);
+
+    void redrawTable();
+    void redrawTable(QList<QTableWidgetItem*> list, QList<int> sizes);
+
 public slots:
     void changeText();
     void selectFolder();
     void openFolder(QString path);
-    void loadDefaultFont();
+    void loadDefaultFonts();
 
     void remove();
     void install();
@@ -91,7 +92,6 @@ public slots:
 
     void sizeChanged(int);
     void sampleSizeChanged(int);
-    void nbColumnsChanged(int);
     void textNeededChanded(QString);
 
 

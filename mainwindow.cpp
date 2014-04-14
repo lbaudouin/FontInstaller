@@ -3,13 +3,19 @@
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent), ui(new Ui::MainWindow), needToUpdateText(false)
 {
+    QCoreApplication::setApplicationName( "FontInstaller" );
+    QSettings settings(qAppName(),qAppName());
+
     ui->setupUi(this);
 
     ui->treeWidget->hide();
 
     connect(ui->lineEdit,SIGNAL(returnPressed()),this,SLOT(changeText()));
+
+    connect(ui->buttonDefault,SIGNAL(clicked()),this,SLOT(loadDefaultFonts()));
+    connect(ui->action_Default_Fonts,SIGNAL(triggered()),this,SLOT(loadDefaultFonts()));
     connect(ui->buttonFolder,SIGNAL(clicked()),this,SLOT(selectFolder()));
-    connect(ui->buttonDefault,SIGNAL(clicked()),this,SLOT(loadDefaultFont()));
+    connect(ui->action_Open_folder,SIGNAL(triggered()),this,SLOT(selectFolder()));
 
     connect(ui->compareButton,SIGNAL(clicked()),this,SLOT(compareSelected()));
 
@@ -17,7 +23,6 @@ MainWindow::MainWindow(QWidget *parent)
     connect(ui->treeWidget,SIGNAL(itemSelectionChanged()),this,SLOT(selectionChanged()));
 
     updateFontCount(0);
-    nbCols = 10;
 
     this->setMinimumSize(640,480);
 
@@ -35,14 +40,10 @@ MainWindow::MainWindow(QWidget *parent)
     ui->comboSize->setCurrentIndex(8);
     for(int i=7;i<101;i++)
         ui->comboSampleSize->addItem(QString::number(i));
-    ui->comboSampleSize->setCurrentIndex(28);
-    for(int i=2;i<26;i++)
-        ui->comboColumns->addItem(QString::number(i));
-    ui->comboColumns->setCurrentIndex(8);
+    ui->comboSampleSize->setCurrentIndex(28);;
 
     connect(ui->comboSize,SIGNAL(currentIndexChanged(int)),this,SLOT(sizeChanged(int)));
     connect(ui->comboSampleSize,SIGNAL(currentIndexChanged(int)),this,SLOT(sampleSizeChanged(int)));
-    connect(ui->comboColumns,SIGNAL(currentIndexChanged(int)),this,SLOT(nbColumnsChanged(int)));
     connect(ui->editNeed,SIGNAL(textChanged(QString)),this,SLOT(textNeededChanded(QString)));
 
     //Sample
@@ -69,6 +70,59 @@ MainWindow::MainWindow(QWidget *parent)
 
 MainWindow::~MainWindow()
 {
+}
+
+void MainWindow::resizeEvent(QResizeEvent *event)
+{
+    QMainWindow::resizeEvent(event);
+    if(event->oldSize().width()!=event->size().width())
+        redrawTable();
+}
+
+void MainWindow::redrawTable()
+{
+    QList<QTableWidgetItem*> selectedItem = ui->tableWidget->selectedItems();
+
+    QList<QTableWidgetItem*> items;
+    QList<int> sizes;
+    for(int i=0;i<ui->tableWidget->rowCount();i++){
+        for(int j=0;j<ui->tableWidget->columnCount();j++){
+            QTableWidgetItem *item =  ui->tableWidget->item(i,j);
+            if(item){
+                sizes << ui->tableWidget->visualItemRect(item).width();
+                items << ui->tableWidget->takeItem(i,j);
+            }
+        }
+    }
+    redrawTable(items,sizes);
+    if(selectedItem.size()==1){
+        selectedItem.at(0)->setSelected(true);
+    }
+}
+
+void MainWindow::redrawTable(QList<QTableWidgetItem*> items, QList<int> sizes)
+{
+    ui->tableWidget->clear();
+    int width = ui->tableWidget->width();
+    int nb = items.size();
+
+    if(nb==0)
+        return;
+
+    int nbCols = findNbCol(sizes,width);
+
+    ui->tableWidget->setColumnCount(nbCols);
+    ui->tableWidget->setRowCount(nb/nbCols+1);
+
+    for(int i=0;i<ui->tableWidget->rowCount();i++){
+        for(int j=0;j<ui->tableWidget->columnCount();j++){
+            if(i*nbCols+j<nb)
+                ui->tableWidget->setItem(i,j,items.at(i*nbCols+j));
+        }
+    }
+
+    ui->tableWidget->resizeColumnsToContents();
+    ui->tableWidget->resizeRowsToContents();
 }
 
 void MainWindow::changeDisplay(int)
@@ -144,97 +198,6 @@ void MainWindow::selectFolder()
     openFolder(dirpath);
 
 }
-/*
-void MainWindow::openFolder(QString path)
-{
-    QTime time;
-    time.restart();
-
-    QDir dir(path);
-    QStringList listFiles = dir.entryList(QStringList() << "*.ttf" << "*.TTF" << "*.otf" << "*.OTF");
-
-    QMap< FontFamilyInfo,QList<FontStyleInfo> > map;
-
-    QThreadPool *pool = new QThreadPool(this);
-    pool->setMaxThreadCount( QThread::idealThreadCount() );
-
-    for(int i=0;i<listFiles.size();i++){
-        QString file = dir.absoluteFilePath(listFiles.at(i));
-
-        FontLoader *loader = new FontLoader(file,&map);
-        pool->start(loader,1);
-    }
-
-    pool->waitForDone();
-
-    qDebug() << "Load: " << time.elapsed() << map.size();
-    time.restart();
-
-    ui->treeWidget->clear();
-    ui->tableWidget->clear();
-
-    QList<QTableWidgetItem*> tableItemList;
-
-    QString text = ui->lineEdit->text();
-
-    int nb = 0;
-
-    QMapIterator< FontFamilyInfo,QList<FontStyleInfo> > iterator(map);
-    while (iterator.hasNext()) {
-        iterator.next();
-        QTreeWidgetItem *familyItem = new QTreeWidgetItem(ui->treeWidget);
-        familyItem->setText(0, iterator.key().family);
-        familyItem->setExpanded(true);
-        familyItem->setCheckState(0,Qt::Unchecked);
-        familyItem->setData(0,Qt::UserRole,iterator.key().file);
-
-        QListIterator< FontStyleInfo > listIterator(iterator.value());
-        while (listIterator.hasNext()) {
-            FontStyleInfo styleInfo = listIterator.next();
-            QTreeWidgetItem *styleItem = new QTreeWidgetItem(familyItem);
-            styleItem->setStatusTip(1,iterator.key().family);
-            styleItem->setToolTip(1,iterator.key().family);
-            styleItem->setText(0, styleInfo.style);
-            styleItem->setText(1, text);
-            styleItem->setFont(1, styleInfo.font);
-
-
-            QTableWidgetItem *tableItem = new QTableWidgetItem("Aa");
-            tableItem->setStatusTip(iterator.key().family);
-            tableItem->setToolTip(iterator.key().family);
-            tableItem->setCheckState(Qt::Unchecked);
-            tableItem->setData(Qt::UserRole,iterator.key().file);
-            tableItem->setFont(styleInfo.font);
-            tableItemList << tableItem;
-
-            nb++;
-        }
-
-        ui->treeWidget->resizeColumnToContents(0);
-        ui->treeWidget->resizeColumnToContents(1);
-        ui->tableWidget->resizeColumnsToContents();
-        ui->tableWidget->resizeRowsToContents();
-
-    }
-
-    ui->tableWidget->setColumnCount(nbCols);
-    ui->tableWidget->setRowCount(nb/nbCols+1);
-
-    for(int i=0;i<tableItemList.size();i++){
-        ui->tableWidget->setItem(i/nbCols,i%nbCols,tableItemList.at(i));
-    }
-
-    ui->tableWidget->resizeColumnsToContents();
-    ui->tableWidget->resizeRowsToContents();
-
-    qDebug() << "Display: " << time.elapsed() << nb;
-
-    return;
-
-
-}
-*/
-
 
 void MainWindow::openFolder(QString path)
 {
@@ -279,6 +242,9 @@ void MainWindow::openFolder(QString path)
 
     QString text = ui->lineEdit->text();
 
+    QList<QTableWidgetItem*> tableItemList;
+    QList<int> sizes;
+
     QList<FontFileInfo> fontFilesInfo;
 
     for(int i=0;i<listFiles.size();i++){
@@ -319,7 +285,7 @@ void MainWindow::openFolder(QString path)
                bool italic = fontdatabase.italic(family,style);
                bool bold = fontdatabase.bold(family,style);
 
-               QFont font(family, 32, weight, italic);
+               QFont font(family, ui->comboSize->currentIndex()+7, weight, italic);
                font.setBold(bold);
 
 
@@ -351,8 +317,11 @@ void MainWindow::openFolder(QString path)
                tableItem->setToolTip(family);
                tableItem->setCheckState(Qt::Unchecked);
                tableItem->setData(Qt::UserRole,file);
+               tableItem->setData(Qt::UserRole+1,family);
+               tableItem->setData(Qt::UserRole+2,style);
                tableItem->setToolTip(family);
                tableItem->setFont(font);
+               tableItemList << tableItem;
 
                ui->tableWidget->setItem(0,0,tableItem);
                ui->tableWidget->resizeColumnsToContents();
@@ -371,6 +340,8 @@ void MainWindow::openFolder(QString path)
                ui->tableWidget->takeItem(0,0);
 
                fontStyleInfo.push_back(fsi);
+
+               sizes << fsi.width;
            }
 
            fontFamilyInfo.styles = fontStyleInfo;
@@ -403,7 +374,7 @@ void MainWindow::openFolder(QString path)
     QTime displayTime;
     displayTime.restart();
 
-    QList<int> sizes;
+  /*  QList<int> sizes;
     for(int i=0;i<fontFilesInfo.size();i++){
         for(int j=0;j<fontFilesInfo.at(i).families.size();j++){
             for(int k=0;k<fontFilesInfo.at(i).families.at(j).styles.size();k++){
@@ -412,17 +383,16 @@ void MainWindow::openFolder(QString path)
         }
     }
 
-    nbCols = findNbCol(sizes,ui->tableWidget->width());
+    nbCols = findNbCol(sizes,ui->tableWidget->width());*/
 
-
-    QProgressDialog * progressDisplay = new QProgressDialog(tr("Displaying"),tr("Cancel"),0,nb-1,this);
+    QProgressDialog * progressDisplay = new QProgressDialog(tr("Displaying"),tr("Cancel"),0,nb,this);
     progressDisplay->setWindowTitle( this->windowTitle() );
     progressDisplay->setModal(true);
     progressDisplay->show();
     QCoreApplication::processEvents();
 
-    ui->tableWidget->setColumnCount(nbCols);
-    ui->tableWidget->setRowCount(nb/nbCols + (nb%nbCols==0?0:1));
+    //ui->tableWidget->setColumnCount(nbCols);
+    //ui->tableWidget->setRowCount(nb/nbCols + (nb%nbCols==0?0:1));
 
     nb = 0;
     for(int i=0;i<fontFilesInfo.size();i++){
@@ -453,7 +423,7 @@ void MainWindow::openFolder(QString path)
                 styleItem->setToolTip(1,family);
                 styleItem->setData(0,Qt::UserRole,file);
 
-                QTableWidgetItem *tableItem = new QTableWidgetItem("Aa");
+               /* QTableWidgetItem *tableItem = new QTableWidgetItem("Aa");
                 tableItem->setCheckState(Qt::Unchecked);
                 tableItem->setData(Qt::UserRole,file);
                 tableItem->setData(Qt::UserRole+1,family);
@@ -461,7 +431,7 @@ void MainWindow::openFolder(QString path)
                 tableItem->setStatusTip(family);
                 tableItem->setToolTip(family);
                 tableItem->setFont(font);
-                ui->tableWidget->setItem(nb/nbCols,nb%nbCols,tableItem);
+                ui->tableWidget->setItem(nb/nbCols,nb%nbCols,tableItem);*/
 
                 //ui->tableWidget->setItem(nb/nbCols,nb%nbCols,fontFilesInfo.at(i).families.at(j).styles.at(k).item);
                 nb++;
@@ -478,9 +448,12 @@ void MainWindow::openFolder(QString path)
         }
     }
 
+    redrawTable(tableItemList,sizes);
 
-    ui->tableWidget->resizeColumnsToContents();
-    ui->tableWidget->resizeRowsToContents();
+    progressDisplay->setValue( progressDisplay->value()+1 );
+
+    //ui->tableWidget->resizeColumnsToContents();
+    //ui->tableWidget->resizeRowsToContents();
     ui->treeWidget->resizeColumnToContents(0);
     ui->treeWidget->resizeColumnToContents(1);
 
@@ -501,7 +474,7 @@ void MainWindow::resizeEventPerso()
 
 }
 
-void MainWindow::loadDefaultFont()
+void MainWindow::loadDefaultFonts()
 {
 
     QFontDatabase fontdatabase;
@@ -534,7 +507,6 @@ void MainWindow::loadDefaultFont()
        QTreeWidgetItem *familyItem = new QTreeWidgetItem(fontTree);
        familyItem->setText(0, family);
        familyItem->setExpanded(true);
-       familyItem->setCheckState(0,Qt::Unchecked);
        familyItem->setData(0,Qt::UserRole,"");
        familyItem->setData(0,Qt::UserRole+1,family);
 
@@ -553,7 +525,7 @@ void MainWindow::loadDefaultFont()
            bool italic = fontdatabase.italic(family,style);
            bool bold = fontdatabase.bold(family,style);
 
-           QFont font(family, 32, weight, italic);
+           QFont font(family, ui->comboSize->currentIndex()+7, weight, italic);
            font.setBold(bold);
 
            styleItem->setText(1, text);
@@ -561,6 +533,7 @@ void MainWindow::loadDefaultFont()
            styleItem->setData(1,Qt::UserRole,"");
            styleItem->setData(1,Qt::UserRole+1,family);
            styleItem->setData(1,Qt::UserRole+2,style);
+           styleItem->setCheckState(0,Qt::Unchecked);
 
            QTableWidgetItem *tableItem = new QTableWidgetItem("Aa");
            tableItem->setStatusTip(family);
@@ -600,19 +573,7 @@ void MainWindow::loadDefaultFont()
     fontTree->resizeColumnToContents(0);
     fontTree->resizeColumnToContents(1);
 
-    nbCols = findNbCol(sizes, ui->tableWidget->width());
-
-    ui->tableWidget->clear();
-
-    ui->tableWidget->setColumnCount(nbCols);
-    ui->tableWidget->setRowCount((nb/nbCols)+1);
-
-    for(int i=0;i<tableItemList.size();i++){
-        ui->tableWidget->setItem(i/nbCols,i%nbCols,tableItemList.at(i));
-    }
-
-    ui->tableWidget->resizeColumnsToContents();
-    ui->tableWidget->resizeRowsToContents();
+    redrawTable(tableItemList,sizes);
 
     ui->tableWidget->item(0,0)->setSelected(true);
     ui->treeWidget->invisibleRootItem()->child(0)->setSelected(true);
@@ -709,19 +670,10 @@ void MainWindow::sampleSizeChanged(int index)
     ui->sample->setFont(font);
 }
 
-void MainWindow::nbColumnsChanged(int)
-{
-  int newNbCols = ui->comboColumns->currentText().toInt();
-  if(nbCols!=newNbCols){
-      nbCols = newNbCols;
-      if(ui->radioGrid->isChecked())
-        changeDisplay(0);
-  }
-}
-
 void MainWindow::textNeededChanded(QString text)
 {
-
+    //TODO, test if a char is included in the font
+    Q_UNUSED(text);
 }
 
 void MainWindow::compareSelected()
@@ -730,18 +682,21 @@ void MainWindow::compareSelected()
         QTreeWidgetItem *root = ui->treeWidget->invisibleRootItem();
         int count = root->childCount();
         for(int i=0;i<count;i++){
-            QTreeWidgetItem *item = root->child(i);
-            if(item->checkState(0)==Qt::Checked){
-                qDebug() << item->data(0,Qt::UserRole).toString() << item->data(0,Qt::UserRole+1).toString() << item->data(0,Qt::UserRole+2).toString();
-                //TODO
-                item->setCheckState(0,Qt::Unchecked);
+            for(int j=0;j<root->child(i)->childCount();j++){
+                QTreeWidgetItem *item = root->child(i)->child(j);
+                if(item->checkState(0)==Qt::Checked){
+                    qDebug() << item->data(0,Qt::UserRole).toString() << item->data(0,Qt::UserRole+1).toString() << item->data(0,Qt::UserRole+2).toString();
+                    //TODO
+                    item->setCheckState(0,Qt::PartiallyChecked);
 
-                QTreeWidgetItem *copyItem = item->clone();
-                ui->compareTreeWidget->addTopLevelItem(copyItem);
-                copyItem->setExpanded(true);
+                    QTreeWidgetItem *copyItem = item->clone();
+                    ui->compareTreeWidget->addTopLevelItem(copyItem);
+                    copyItem->setExpanded(true);
+                    copyItem->setCheckState(0,Qt::Unchecked);
 
-                //if(item->data(0,Qt::UserRole).toString().isEmpty())
-                //    copyItem->setFlags(Qt::ItemIsEnabled);
+                    //if(item->data(0,Qt::UserRole).toString().isEmpty())
+                    //    copyItem->setFlags(Qt::ItemIsEnabled);
+                }
             }
         }
     }else{
@@ -752,7 +707,7 @@ void MainWindow::compareSelected()
                     if(item->checkState()==Qt::Checked){
                         qDebug() << item->data(Qt::UserRole).toString() << item->data(Qt::UserRole+1).toString() << item->data(Qt::UserRole+2).toString();
                         //TODO
-                        item->setCheckState(Qt::Unchecked);
+                        item->setCheckState(Qt::PartiallyChecked);
 
                         QString file = item->data(Qt::UserRole).toString();
                         QString family = item->data(Qt::UserRole+1).toString();
@@ -810,7 +765,9 @@ void MainWindow::selectionChanged()
             }
         }
     }
+    font.setPointSize( ui->comboSampleSize->currentIndex() + 7 );
     ui->sample->setFont( font );
+
     if(font.styleName().isEmpty())
         ui->fontNameLabel->setText(font.family());
     else
@@ -824,6 +781,7 @@ void MainWindow::selectionChanged()
         }
     }
     selectedFileName = fileName;
+    ui->scrollSample->setMinimumHeight(ui->sample->height());
 }
 
 void MainWindow::tabChanged(int index)

@@ -177,23 +177,6 @@
               </widget>
              </item>
              <item>
-              <widget class="QLabel" name="labelColumns">
-               <property name="text">
-                <string>Columns:</string>
-               </property>
-              </widget>
-             </item>
-             <item>
-              <widget class="QComboBox" name="comboColumns"/>
-             </item>
-             <item>
-              <widget class="Line" name="line">
-               <property name="orientation">
-                <enum>Qt::Vertical</enum>
-               </property>
-              </widget>
-             </item>
-             <item>
               <widget class="QLabel" name="labelNeed">
                <property name="text">
                 <string>Special character:</string>
@@ -235,10 +218,13 @@
             <item>
              <widget class="QScrollArea" name="scrollSample">
               <property name="sizePolicy">
-               <sizepolicy hsizetype="Expanding" vsizetype="Minimum">
+               <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
                 <horstretch>0</horstretch>
                 <verstretch>0</verstretch>
                </sizepolicy>
+              </property>
+              <property name="verticalScrollBarPolicy">
+               <enum>Qt::ScrollBarAlwaysOff</enum>
               </property>
               <property name="widgetResizable">
                <bool>true</bool>
@@ -255,6 +241,12 @@
                <layout class="QHBoxLayout" name="horizontalLayout_2">
                 <item>
                  <widget class="QLabel" name="sample">
+                  <property name="sizePolicy">
+                   <sizepolicy hsizetype="Preferred" vsizetype="Maximum">
+                    <horstretch>0</horstretch>
+                    <verstretch>0</verstretch>
+                   </sizepolicy>
+                  </property>
                   <property name="text">
                    <string>Sample</string>
                   </property>
@@ -391,6 +383,62 @@
    </layout>
   </widget>
   <widget class="QStatusBar" name="statusBar"/>
+  <widget class="QMenuBar" name="menuBar">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>0</y>
+     <width>1024</width>
+     <height>25</height>
+    </rect>
+   </property>
+   <widget class="QMenu" name="menuMenu">
+    <property name="title">
+     <string>&amp;Menu</string>
+    </property>
+    <addaction name="action_Default_Fonts"/>
+    <addaction name="action_Open_folder"/>
+    <addaction name="separator"/>
+    <addaction name="action_Quit"/>
+   </widget>
+   <widget class="QMenu" name="menu">
+    <property name="title">
+     <string>?</string>
+    </property>
+    <addaction name="action_About"/>
+   </widget>
+   <addaction name="menuMenu"/>
+   <addaction name="menu"/>
+  </widget>
+  <action name="action_Default_Fonts">
+   <property name="text">
+    <string>&amp;Default Fonts</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+D</string>
+   </property>
+  </action>
+  <action name="action_Open_folder">
+   <property name="text">
+    <string>&amp;Open folder</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+O</string>
+   </property>
+  </action>
+  <action name="action_Quit">
+   <property name="text">
+    <string>&amp;Quit</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+Q</string>
+   </property>
+  </action>
+  <action name="action_About">
+   <property name="text">
+    <string>&amp;About</string>
+   </property>
+  </action>
  </widget>
  <resources>
   <include location="ressources.qrc"/>
@@ -409,6 +457,22 @@
     <hint type="destinationlabel">
      <x>1018</x>
      <y>711</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>action_Quit</sender>
+   <signal>triggered()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>close()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>511</x>
+     <y>374</y>
     </hint>
    </hints>
   </connection>
