@@ -7,10 +7,6 @@ MainWindow::MainWindow(QWidget *parent)
 
     ui->treeWidget->hide();
 
-    progressDisplay = new QProgressBar;
-    ui->statusBar->addWidget(progressDisplay);
-    progressDisplay->hide();
-
     connect(ui->lineEdit,SIGNAL(returnPressed()),this,SLOT(changeText()));
     connect(ui->buttonFolder,SIGNAL(clicked()),this,SLOT(selectFolder()));
     connect(ui->buttonDefault,SIGNAL(clicked()),this,SLOT(loadDefaultFont()));
@@ -65,29 +61,10 @@ MainWindow::MainWindow(QWidget *parent)
     connect(ui->buttonInstall,SIGNAL(clicked()),this,SLOT(install()));
     connect(ui->buttonQuit,SIGNAL(clicked()),this,SLOT(close()));
 
-    connect(qApp,SIGNAL(aboutToQuit()),this,SLOT(aboutToQuit()));
 }
 
 MainWindow::~MainWindow()
 {
-}
-
-void MainWindow::aboutToQuit()
-{
-    qDebug() << "STOP";
-    stop = true;
-}
-
-void MainWindow::changeEvent(QEvent *e)
-{
-    QMainWindow::changeEvent(e);
-    switch (e->type()) {
-    case QEvent::LanguageChange:
-        ui->retranslateUi(this);
-        break;
-    default:
-        break;
-    }
 }
 
 void MainWindow::setOptionsVisible(bool visibility)
@@ -103,6 +80,9 @@ void MainWindow::changeDisplay(int)
     }else{
         ui->tableWidget->hide();
         ui->treeWidget->show();
+        if(needToUpdateText){
+           applyText();
+        }
     }
 }
 
@@ -120,22 +100,45 @@ void MainWindow::changeText()
      QString text = ui->lineEdit->text().trimmed();
      emit this->textChanged(text);
 
-     /*foreach(QTreeWidgetItem *item, items){
-         item->setText(1, text);
-     }*/
-
-     QTreeWidgetItem *root = ui->treeWidget->invisibleRootItem();
-     for(int i=0;i<root->childCount();i++){
-         for(int j=0;j<root->child(i)->childCount();j++){
-            root->child(i)->child(j)->setText(1,text);
-         }
+     if(ui->radioLine->isChecked()){
+        applyText();
+     }else{
+         needToUpdateText = true;
      }
+}
+
+void MainWindow::applyText()
+{
+    QString text = ui->lineEdit->text().trimmed();
+    needToUpdateText = false;
+    QTreeWidgetItem *root = ui->treeWidget->invisibleRootItem();
+    QProgressDialog *progressDialog = new QProgressDialog(tr("Applying"),"",0,root->childCount()-1,this);
+    progressDialog->setWindowTitle( this->windowTitle() );
+    progressDialog->setModal(true);
+
+    QProgressBar* progressBar = progressDialog->findChild<QProgressBar*>();
+    if(progressBar){
+      progressBar->setFormat("%v/%m (%p%)");
+    }
+
+    progressDialog->show();
+
+    for(int i=0;i<root->childCount();i++){
+        for(int j=0;j<root->child(i)->childCount();j++){
+           root->child(i)->child(j)->setText(1,text);
+        }
+        progressDialog->setValue( progressDialog->value()+1 );
+        QCoreApplication::processEvents();
+    }
+    ui->treeWidget->resizeColumnToContents(1);
 }
 
 void MainWindow::selectFolder()
 {
     QString defaultPath = "./Fonts/";
     QDir defaultDir(defaultPath);
+    if(!defaultDir.exists())
+        defaultDir.setPath("~/Documents/Fonts/");
     if(!defaultDir.exists())
         defaultPath = QDir::homePath();
     QString dirpath = QFileDialog::getExistingDirectory(this, tr("Open Directory"), defaultPath, QFileDialog::ShowDirsOnly);
@@ -258,6 +261,17 @@ void MainWindow::openFolder(QString path)
 
     QCoreApplication::processEvents();
 
+    QProgressDialog *progressDialog = new QProgressDialog(tr("Loading"),tr("Cancel"),0,listFiles.size()-1,this);
+    progressDialog->setWindowTitle( this->windowTitle() );
+    progressDialog->setModal(true);
+
+    QProgressBar* progressBar = progressDialog->findChild<QProgressBar*>();
+    if(progressBar){
+      progressBar->setFormat("%v/%m (%p%)");
+    }
+
+    progressDialog->show();
+
     QFontDatabase fontdatabase;
 
     ui->treeWidget->clear();
@@ -278,9 +292,6 @@ void MainWindow::openFolder(QString path)
 
         int id = QFontDatabase::addApplicationFont( file );
         QStringList families = QFontDatabase::applicationFontFamilies( id );
-
-        if(families.isEmpty())
-            continue;
 
         FontFileInfo fontFileInfo;
         fontFileInfo.file = file;
@@ -369,10 +380,26 @@ void MainWindow::openFolder(QString path)
            fontFileInfo.families.push_back(fontFamilyInfo);
 
         }
-        fontFilesInfo.push_back(fontFileInfo);
+
+        if(!families.isEmpty())
+            fontFilesInfo.push_back(fontFileInfo);
 
         QFontDatabase::removeApplicationFont(id);
+
+        if(progressDialog->wasCanceled()){
+            ui->tableWidget->clear();
+            ui->treeWidget->clear();
+            ui->tableWidget->setColumnCount(0);
+            ui->tableWidget->setRowCount(0);
+            return;
+        }
+
+        progressDialog->setValue( progressDialog->value()+1 );
     }
+
+
+    ui->tableWidget->setColumnCount(0);
+    ui->tableWidget->setRowCount(0);
 
     qDebug() << "Loading time: " << time.elapsed() << nb;
 
@@ -392,6 +419,11 @@ void MainWindow::openFolder(QString path)
 
     ui->tableWidget->setColumnCount(nbCols);
     ui->tableWidget->setRowCount(nb/nbCols + (nb%nbCols==0?0:1));
+
+    QProgressDialog * progressDisplay = new QProgressDialog(tr("Displaying"),tr("Cancel"),0,nb-1,this);
+    progressDisplay->setWindowTitle( this->windowTitle() );
+    progressDisplay->setModal(true);
+    progressDisplay->show();
 
     nb = 0;
     for(int i=0;i<fontFilesInfo.size();i++){
@@ -432,7 +464,16 @@ void MainWindow::openFolder(QString path)
 
                 //ui->tableWidget->setItem(nb/nbCols,nb%nbCols,fontFilesInfo.at(i).families.at(j).styles.at(k).item);
                 nb++;
+
+                progressDisplay->setValue( progressDisplay->value()+1 );
             }
+        }
+        if(progressDisplay->wasCanceled()){
+            ui->tableWidget->clear();
+            ui->treeWidget->clear();
+            ui->tableWidget->setColumnCount(0);
+            ui->tableWidget->setRowCount(0);
+            return;
         }
     }
 
@@ -471,12 +512,24 @@ void MainWindow::loadDefaultFont()
     ui->tableWidget->setRowCount(1);
     ui->tableWidget->setColumnCount(1);
 
+
+    QStringList families = fontdatabase.families();
+
+    QProgressDialog *progressDialog = new QProgressDialog(tr("Loading"),tr("Cancel"),0,families.size()-1,this);
+    progressDialog->setWindowTitle( this->windowTitle() );
+    progressDialog->setModal(true);
+    QProgressBar* progressBar = progressDialog->findChild<QProgressBar*>();
+    if(progressBar){
+      progressBar->setFormat("%v/%m (%p%)");
+    }
+    progressDialog->show();
+
     QList<QTableWidgetItem*> tableItemList;
 
     QList<int> sizes;
 
     int nb = 0;
-    foreach (const QString &family, fontdatabase.families())  {
+    foreach (const QString &family, families)  {
        QTreeWidgetItem *familyItem = new QTreeWidgetItem(fontTree);
        familyItem->setText(0, family);
        familyItem->setExpanded(true);
@@ -523,6 +576,16 @@ void MainWindow::loadDefaultFont()
 
            nb++;
        }
+
+       if(progressDialog->wasCanceled()){
+           ui->tableWidget->clear();
+           ui->treeWidget->clear();
+           ui->tableWidget->setColumnCount(0);
+           ui->tableWidget->setRowCount(0);
+           return;
+       }
+
+       progressDialog->setValue( progressDialog->value()+1 );
     }
 
     fontTree->resizeColumnToContents(0);

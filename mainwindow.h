@@ -61,7 +61,6 @@ class MainWindow : public QMainWindow
 public:
     MainWindow(QWidget *parent = 0);
     ~MainWindow();
-    void changeEvent(QEvent *e);
 
 private:
     Ui::MainWindow *ui;
@@ -71,13 +70,15 @@ private:
     int nbCols;
     int currentSize;
 
-    QProgressBar *progressDisplay;
-
     bool stop;
+
+    bool needToUpdateText;
 
 protected:
     void updateFontCount(int nb);
     int findNbCol(QList<int> sizes, int widthMax);
+
+    void applyText();
 
 public slots:
     void changeText();
@@ -97,8 +98,6 @@ public slots:
 
 
     void displaySelected();
-
-    void aboutToQuit();
 
     void resizeEventPerso();
 
