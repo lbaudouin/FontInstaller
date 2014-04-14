@@ -20,7 +20,7 @@
 
 #include <QEventLoop>
 
-#include <qfontlabel.h>
+#include <QFontDatabase>
 
 #include <QThreadPool>
 #include <QRunnable>
@@ -64,15 +64,12 @@ public:
 
 private:
     Ui::MainWindow *ui;
-    QFontDatabase database;
 
-    QFontLabel *sample;
     int nbCols;
-    int currentSize;
-
-    bool stop;
 
     bool needToUpdateText;
+
+    QString selectedFileName;
 
 protected:
     void updateFontCount(int nb);
@@ -85,10 +82,11 @@ public slots:
     void selectFolder();
     void openFolder(QString path);
     void loadDefaultFont();
-    void install();
-    void setOptionsVisible(bool visibility);
 
-    void displayFont(FontDisplay);
+    void remove();
+    void install();
+    void installOneFont();
+
     void changeDisplay(int);
 
     void sizeChanged(int);
@@ -97,22 +95,12 @@ public slots:
     void textNeededChanded(QString);
 
 
-    void displaySelected();
+    void compareSelected();
 
     void resizeEventPerso();
-
     void selectionChanged();
-    void itemChanged(QTableWidgetItem*);
-    void itemChanged(QTreeWidgetItem*);
-signals:
-    void textChanged(QString);
-    void fontChanged(FontDisplay);
-    void setInstallEnabled(bool);
-    void setSampleSize(int);
-    void setSize(int);
-    void needText(QString);
 
-    void open(QString);
+    void tabChanged(int);
 
 };
 
