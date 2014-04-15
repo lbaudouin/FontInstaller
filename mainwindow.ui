@@ -10,6 +10,12 @@
     <height>750</height>
    </rect>
   </property>
+  <property name="minimumSize">
+   <size>
+    <width>640</width>
+    <height>480</height>
+   </size>
+  </property>
   <property name="windowTitle">
    <string notr="true">Font Installer</string>
   </property>
@@ -36,12 +42,20 @@
             <property name="text">
              <string>Default Fonts</string>
             </property>
+            <property name="icon">
+             <iconset resource="ressources.qrc">
+              <normaloff>:/images/default</normaloff>:/images/default</iconset>
+            </property>
            </widget>
           </item>
           <item>
            <widget class="QPushButton" name="buttonFolder">
             <property name="text">
              <string>Open Folder</string>
+            </property>
+            <property name="icon">
+             <iconset resource="ressources.qrc">
+              <normaloff>:/images/folder</normaloff>:/images/folder</iconset>
             </property>
            </widget>
           </item>
@@ -178,13 +192,20 @@
              </item>
              <item>
               <widget class="QLabel" name="labelNeed">
+               <property name="enabled">
+                <bool>false</bool>
+               </property>
                <property name="text">
                 <string>Special character:</string>
                </property>
               </widget>
              </item>
              <item>
-              <widget class="QLineEdit" name="editNeed"/>
+              <widget class="QLineEdit" name="editNeed">
+               <property name="enabled">
+                <bool>false</bool>
+               </property>
+              </widget>
              </item>
              <item>
               <spacer name="horizontalSpacer_options">
@@ -229,30 +250,24 @@
               <property name="widgetResizable">
                <bool>true</bool>
               </property>
-              <widget class="QWidget" name="scrollAreaWidgetContents_2">
+              <widget class="QLabel" name="sample">
                <property name="geometry">
                 <rect>
                  <x>0</x>
                  <y>0</y>
-                 <width>885</width>
+                 <width>870</width>
                  <height>101</height>
                 </rect>
                </property>
-               <layout class="QHBoxLayout" name="horizontalLayout_2">
-                <item>
-                 <widget class="QLabel" name="sample">
-                  <property name="sizePolicy">
-                   <sizepolicy hsizetype="Preferred" vsizetype="Maximum">
-                    <horstretch>0</horstretch>
-                    <verstretch>0</verstretch>
-                   </sizepolicy>
-                  </property>
-                  <property name="text">
-                   <string>Sample</string>
-                  </property>
-                 </widget>
-                </item>
-               </layout>
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="text">
+                <string>Sample</string>
+               </property>
               </widget>
              </widget>
             </item>
@@ -278,6 +293,10 @@
               <property name="text">
                <string>Options</string>
               </property>
+              <property name="icon">
+               <iconset resource="ressources.qrc">
+                <normaloff>:/images/options</normaloff>:/images/options</iconset>
+              </property>
               <property name="checkable">
                <bool>true</bool>
               </property>
@@ -288,6 +307,10 @@
               <property name="text">
                <string>Compare</string>
               </property>
+              <property name="icon">
+               <iconset resource="ressources.qrc">
+                <normaloff>:/images/compare</normaloff>:/images/compare</iconset>
+              </property>
              </widget>
             </item>
             <item>
@@ -295,12 +318,20 @@
               <property name="text">
                <string>Install</string>
               </property>
+              <property name="icon">
+               <iconset resource="ressources.qrc">
+                <normaloff>:/images/install</normaloff>:/images/install</iconset>
+              </property>
              </widget>
             </item>
             <item>
              <widget class="QPushButton" name="buttonQuit">
               <property name="text">
                <string>Quit</string>
+              </property>
+              <property name="icon">
+               <iconset resource="ressources.qrc">
+                <normaloff>:/images/close</normaloff>:/images/close</iconset>
               </property>
              </widget>
             </item>
@@ -345,12 +376,20 @@
             <property name="text">
              <string>Remove</string>
             </property>
+            <property name="icon">
+             <iconset resource="ressources.qrc">
+              <normaloff>:/images/remove</normaloff>:/images/remove</iconset>
+            </property>
            </widget>
           </item>
           <item>
            <widget class="QPushButton" name="installButton">
             <property name="text">
              <string>Install</string>
+            </property>
+            <property name="icon">
+             <iconset resource="ressources.qrc">
+              <normaloff>:/images/install</normaloff>:/images/install</iconset>
             </property>
            </widget>
           </item>
@@ -371,6 +410,10 @@
            <widget class="QPushButton" name="quitButton">
             <property name="text">
              <string>Quit</string>
+            </property>
+            <property name="icon">
+             <iconset resource="ressources.qrc">
+              <normaloff>:/images/close</normaloff>:/images/close</iconset>
             </property>
            </widget>
           </item>
@@ -411,32 +454,61 @@
    <addaction name="menu"/>
   </widget>
   <action name="action_Default_Fonts">
+   <property name="icon">
+    <iconset resource="ressources.qrc">
+     <normaloff>:/images/default</normaloff>:/images/default</iconset>
+   </property>
    <property name="text">
     <string>&amp;Default Fonts</string>
    </property>
    <property name="shortcut">
     <string>Ctrl+D</string>
    </property>
+   <property name="iconVisibleInMenu">
+    <bool>true</bool>
+   </property>
   </action>
   <action name="action_Open_folder">
+   <property name="icon">
+    <iconset resource="ressources.qrc">
+     <normaloff>:/images/folder</normaloff>:/images/folder</iconset>
+   </property>
    <property name="text">
     <string>&amp;Open folder</string>
    </property>
    <property name="shortcut">
     <string>Ctrl+O</string>
    </property>
+   <property name="iconVisibleInMenu">
+    <bool>true</bool>
+   </property>
   </action>
   <action name="action_Quit">
+   <property name="icon">
+    <iconset resource="ressources.qrc">
+     <normaloff>:/images/close</normaloff>:/images/close</iconset>
+   </property>
    <property name="text">
     <string>&amp;Quit</string>
    </property>
    <property name="shortcut">
     <string>Ctrl+Q</string>
    </property>
+   <property name="iconVisibleInMenu">
+    <bool>true</bool>
+   </property>
   </action>
   <action name="action_About">
+   <property name="icon">
+    <iconset theme="help-contents">
+     <normaloff/>
+    </iconset>
+   </property>
    <property name="text">
     <string>&amp;About</string>
+   </property>
+   <property name="iconVisibleInMenu">
+    <bool>true</bool>
    </property>
   </action>
  </widget>

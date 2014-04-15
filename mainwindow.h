@@ -12,6 +12,7 @@
 #include <QProgressBar>
 #include <QDesktopServices>
 #include <QUrl>
+#include <QScrollBar>
 
 #include <QTime>
 #include <QTreeWidget>
@@ -67,6 +68,8 @@ private:
 
     QString selectedFileName;
 
+    QStringList listCompare;
+
 protected:
     void updateFontCount(int nb);
     int findNbCol(QList<int> sizes, int widthMax);
@@ -77,6 +80,9 @@ protected:
 
     void redrawTable();
     void redrawTable(QList<QTableWidgetItem*> list, QList<int> sizes);
+
+    void compareItem(QTreeWidgetItem *item);
+    void compareItem(QTableWidgetItem *item);
 
 public slots:
     void changeText();

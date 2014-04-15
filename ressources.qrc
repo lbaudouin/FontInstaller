@@ -4,5 +4,12 @@
     </qresource>
     <qresource prefix="/images">
         <file alias="icon">images/fontinstaller.png</file>
+        <file alias="close">images/close.png</file>
+        <file alias="options">images/options.png</file>
+        <file alias="compare">images/compare.png</file>
+        <file alias="install">images/install.png</file>
+        <file alias="remove">images/remove.png</file>
+        <file alias="default">images/default.png</file>
+        <file alias="folder">images/folder.png</file>
     </qresource>
 </RCC>

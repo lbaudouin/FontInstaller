@@ -24,8 +24,6 @@ MainWindow::MainWindow(QWidget *parent)
 
     updateFontCount(0);
 
-    this->setMinimumSize(640,480);
-
     //Display mode
     QButtonGroup *buttonGroup = new QButtonGroup;
     buttonGroup->addButton(ui->radioGrid,0);
@@ -66,6 +64,8 @@ MainWindow::MainWindow(QWidget *parent)
     connect(ui->buttonQuit,SIGNAL(clicked()),this,SLOT(close()));
 
     connect(ui->tabWidget,SIGNAL(currentChanged(int)),this,SLOT(tabChanged(int)));
+
+    ui->scrollSample->setWidgetResizable(true);
 }
 
 MainWindow::~MainWindow()
@@ -89,7 +89,7 @@ void MainWindow::redrawTable()
         for(int j=0;j<ui->tableWidget->columnCount();j++){
             QTableWidgetItem *item =  ui->tableWidget->item(i,j);
             if(item){
-                sizes << ui->tableWidget->visualItemRect(item).width();
+                sizes << item->data(Qt::UserRole+3).toInt();
                 items << ui->tableWidget->takeItem(i,j);
             }
         }
@@ -103,7 +103,7 @@ void MainWindow::redrawTable()
 void MainWindow::redrawTable(QList<QTableWidgetItem*> items, QList<int> sizes)
 {
     ui->tableWidget->clear();
-    int width = ui->tableWidget->width();
+    int width = ui->tableWidget->width() - ui->tableWidget->verticalScrollBar()->width();
     int nb = items.size();
 
     if(nb==0)
@@ -150,6 +150,8 @@ void MainWindow::updateFontCount(int nb)
 
 void MainWindow::changeText()
 {
+    QString text = ui->lineEdit->text().trimmed();
+    ui->sample->setText(text);
      if(ui->radioLine->isChecked()){
         applyText();
      }else{
@@ -161,7 +163,12 @@ void MainWindow::applyText()
 {
     QString text = ui->lineEdit->text().trimmed();
     needToUpdateText = false;
+
     QTreeWidgetItem *root = ui->treeWidget->invisibleRootItem();
+
+    if(root->childCount()==0)
+        return;
+
     QProgressDialog *progressDialog = new QProgressDialog(tr("Applying"),"",0,root->childCount()-1,this);
     progressDialog->setWindowTitle( this->windowTitle() );
     progressDialog->setModal(true);
@@ -214,10 +221,12 @@ void MainWindow::openFolder(QString path)
     if(!dir.exists())
         return;
 
-    this->setCursor( Qt::WaitCursor );
-
     QStringList listFiles = dir.entryList(QStringList() << "*.ttf" << "*.TTF" << "*.otf" << "*.OTF");
 
+    if(listFiles.isEmpty())
+        return;
+
+    this->setCursor( Qt::WaitCursor );
 
     QProgressDialog *progressDialog = new QProgressDialog(tr("Loading"),tr("Cancel"),0,listFiles.size()-1,this);
     progressDialog->setWindowTitle( this->windowTitle() );
@@ -248,9 +257,6 @@ void MainWindow::openFolder(QString path)
     QList<FontFileInfo> fontFilesInfo;
 
     for(int i=0;i<listFiles.size();i++){
-        QTime t;
-        t.restart();
-
         QString file = dir.absoluteFilePath(listFiles.at(i));
 
         int id = QFontDatabase::addApplicationFont( file );
@@ -327,6 +333,11 @@ void MainWindow::openFolder(QString path)
                ui->tableWidget->resizeColumnsToContents();
                ui->tableWidget->resizeRowsToContents();
 
+               int itemWidth = ui->tableWidget->visualItemRect(tableItem).width();
+               sizes << itemWidth;
+
+               tableItem->setData(Qt::UserRole+3,itemWidth);
+
 
                FontStyleInfo fsi;
                fsi.style = style;
@@ -340,8 +351,6 @@ void MainWindow::openFolder(QString path)
                ui->tableWidget->takeItem(0,0);
 
                fontStyleInfo.push_back(fsi);
-
-               sizes << fsi.width;
            }
 
            fontFamilyInfo.styles = fontStyleInfo;
@@ -549,7 +558,10 @@ void MainWindow::loadDefaultFonts()
            ui->tableWidget->resizeColumnsToContents();
            ui->tableWidget->resizeRowsToContents();
 
-           sizes << ui->tableWidget->visualItemRect(tableItem).width();
+           int itemWidth = ui->tableWidget->visualItemRect(tableItem).width();
+           sizes << itemWidth;
+
+           tableItem->setData(Qt::UserRole+3,itemWidth);
 
            if(ui->radioGrid->isChecked())
               QCoreApplication::processEvents();
@@ -598,7 +610,7 @@ int MainWindow::findNbCol(QList<int> sizes, int widthMax)
         for(int k=0;k<cols.size();k++){
             totalwidth += cols.at(k);
         }
-        if(c>50)
+        if(c>100)
             break;
     }
     return qMax(1,c-1);
@@ -623,20 +635,34 @@ void MainWindow::install()
                     QDesktopServices::openUrl(QUrl("file:///" + filename, QUrl::TolerantMode));
                 }
             }
+            item->setCheckState(0,Qt::PartiallyChecked);
         }
     }
 }
 
 void MainWindow::remove()
 {
+    QList<QTreeWidgetItem*> toRemove;
     QTreeWidgetItem *root = ui->compareTreeWidget->invisibleRootItem();
     for(int i=0;i<root->childCount();i++){
         QTreeWidgetItem *item = root->child(i);
         if(item->checkState(0)==Qt::Checked){
-            delete item;
+            QString family = item->data(0,Qt::UserRole+1).toString();
+            QString style = item->data(0,Qt::UserRole+2).toString();
+            QString fontSignature = family + " - " + style;
+            listCompare.removeAll(fontSignature);
+            toRemove << item;
         }
     }
-    ui->tabWidget->setTabText(1,tr("Compare (%1)").arg(ui->compareTreeWidget->invisibleRootItem()->childCount()));
+    for(int i=0;i<toRemove.size();i++)
+        delete toRemove[i];
+
+    int nbCompare = ui->compareTreeWidget->invisibleRootItem()->childCount();
+    if(nbCompare>0){
+        ui->tabWidget->setTabText(1,tr("Compare (%1)").arg(nbCompare));
+    }else{
+        ui->tabWidget->setTabText(1,tr("Compare"));
+    }
 }
 
 void MainWindow::sizeChanged(int index)
@@ -651,6 +677,8 @@ void MainWindow::sizeChanged(int index)
           root->child(i)->child(j)->setFont(1,font);
       }
   }
+  QList<QTableWidgetItem*> item;
+  QList<int> sizes;
   for(int i=0;i<ui->tableWidget->rowCount();i++){
       for(int j=0;j<ui->tableWidget->columnCount();j++){
           QTableWidgetItem *item = ui->tableWidget->item(i,j);
@@ -661,6 +689,8 @@ void MainWindow::sizeChanged(int index)
           }
       }
   }
+  ui->treeWidget->resizeColumnToContents(1);
+  ui->compareTreeWidget->resizeColumnToContents(1);
 }
 
 void MainWindow::sampleSizeChanged(int index)
@@ -676,8 +706,64 @@ void MainWindow::textNeededChanded(QString text)
     Q_UNUSED(text);
 }
 
+void MainWindow::compareItem(QTreeWidgetItem *item)
+{
+    item->setCheckState(0,Qt::PartiallyChecked);
+
+    QString family = item->data(0,Qt::UserRole+1).toString();
+    QString style = item->data(0,Qt::UserRole+2).toString();
+
+    QString fontSignature = family + " - " + style;
+    if(listCompare.contains(fontSignature))
+        return;
+
+    QTreeWidgetItem *copyItem = item->clone();
+    ui->compareTreeWidget->addTopLevelItem(copyItem);
+    copyItem->setExpanded(true);
+    copyItem->setCheckState(0,Qt::Unchecked);
+
+    listCompare << fontSignature;
+}
+
+void MainWindow::compareItem(QTableWidgetItem *item)
+{
+    item->setCheckState(Qt::PartiallyChecked);
+
+    QString file = item->data(Qt::UserRole).toString();
+    QString family = item->data(Qt::UserRole+1).toString();
+    QString style = item->data(Qt::UserRole+2).toString();
+
+    QString fontSignature = family + " - " + style;
+    if(listCompare.contains(fontSignature))
+        return;
+
+    QFont font = item->font();
+
+    QTreeWidgetItem *familyItem = new QTreeWidgetItem(ui->compareTreeWidget);
+    familyItem->setCheckState(0,Qt::Unchecked);
+
+    familyItem->setText(0, family);
+    familyItem->setData(0,Qt::UserRole,file);
+    familyItem->setData(0,Qt::UserRole+1,family);
+    familyItem->setData(0,Qt::UserRole+2,style);
+    familyItem->setExpanded(true);
+
+    QString text = ui->lineEdit->text();
+
+    QTreeWidgetItem *styleItem = new QTreeWidgetItem(familyItem);
+    styleItem->setText(0, style);
+    styleItem->setText(1, text);
+    styleItem->setFont(1, font);
+    styleItem->setData(1,Qt::UserRole,file);
+    styleItem->setData(1,Qt::UserRole+1,family);
+    styleItem->setData(1,Qt::UserRole+2,style);
+
+    listCompare << fontSignature;
+}
+
 void MainWindow::compareSelected()
 {
+    int nbChecked = 0;
     if(ui->radioLine->isChecked()){
         QTreeWidgetItem *root = ui->treeWidget->invisibleRootItem();
         int count = root->childCount();
@@ -685,17 +771,8 @@ void MainWindow::compareSelected()
             for(int j=0;j<root->child(i)->childCount();j++){
                 QTreeWidgetItem *item = root->child(i)->child(j);
                 if(item->checkState(0)==Qt::Checked){
-                    qDebug() << item->data(0,Qt::UserRole).toString() << item->data(0,Qt::UserRole+1).toString() << item->data(0,Qt::UserRole+2).toString();
-                    //TODO
-                    item->setCheckState(0,Qt::PartiallyChecked);
-
-                    QTreeWidgetItem *copyItem = item->clone();
-                    ui->compareTreeWidget->addTopLevelItem(copyItem);
-                    copyItem->setExpanded(true);
-                    copyItem->setCheckState(0,Qt::Unchecked);
-
-                    //if(item->data(0,Qt::UserRole).toString().isEmpty())
-                    //    copyItem->setFlags(Qt::ItemIsEnabled);
+                    compareItem(item);
+                    nbChecked++;
                 }
             }
         }
@@ -705,42 +782,42 @@ void MainWindow::compareSelected()
                 QTableWidgetItem *item = ui->tableWidget->item(i,j);
                 if(item){
                     if(item->checkState()==Qt::Checked){
-                        qDebug() << item->data(Qt::UserRole).toString() << item->data(Qt::UserRole+1).toString() << item->data(Qt::UserRole+2).toString();
-                        //TODO
-                        item->setCheckState(Qt::PartiallyChecked);
-
-                        QString file = item->data(Qt::UserRole).toString();
-                        QString family = item->data(Qt::UserRole+1).toString();
-                        QString style = item->data(Qt::UserRole+2).toString();
-                        QFont font = item->font();
-
-                        QTreeWidgetItem *familyItem = new QTreeWidgetItem(ui->compareTreeWidget);
-                        familyItem->setCheckState(0,Qt::Unchecked);
-
-                        familyItem->setText(0, family);
-                        familyItem->setData(0,Qt::UserRole,file);
-                        familyItem->setData(0,Qt::UserRole+1,family);
-                        familyItem->setData(0,Qt::UserRole+2,style);
-                        familyItem->setExpanded(true);
-
-                        QString text = ui->lineEdit->text();
-
-                        QTreeWidgetItem *styleItem = new QTreeWidgetItem(familyItem);
-                        styleItem->setText(0, style);
-                        styleItem->setText(1, text);
-                        styleItem->setFont(1, font);
-                        styleItem->setData(1,Qt::UserRole,file);
-                        styleItem->setData(1,Qt::UserRole+1,family);
-                        styleItem->setData(1,Qt::UserRole+2,style);
-
+                        compareItem(item);
+                        nbChecked++;
                     }
                 }
             }
         }
     }
-    ui->tabWidget->setTabText(1,tr("Compare (%1)").arg(ui->compareTreeWidget->invisibleRootItem()->childCount()));
+
+    if(nbChecked==0){
+        //Add current selection
+        if(ui->radioGrid->isChecked()){
+            QList<QTableWidgetItem *> list = ui->tableWidget->selectedItems();
+            if(list.size()==1){
+                compareItem(list[0]);
+            }
+        }else{
+            QList<QTreeWidgetItem *> list = ui->treeWidget->selectedItems();
+            if(list.size()==1){
+                if(list[0]->childCount()!=0){
+                    compareItem(list[0]->child(0));
+                }else{
+                    compareItem(list[0]);
+                }
+            }
+        }
+    }
+
     ui->compareTreeWidget->resizeColumnToContents(0);
     ui->compareTreeWidget->resizeColumnToContents(1);
+
+    int nbCompare = ui->compareTreeWidget->invisibleRootItem()->childCount();
+    if(nbCompare>0){
+        ui->tabWidget->setTabText(1,tr("Compare (%1)").arg(nbCompare));
+    }else{
+        ui->tabWidget->setTabText(1,tr("Compare"));
+    }
 }
 
 void MainWindow::selectionChanged()
@@ -781,7 +858,8 @@ void MainWindow::selectionChanged()
         }
     }
     selectedFileName = fileName;
-    ui->scrollSample->setMinimumHeight(ui->sample->height());
+    //ui->scrollSample->setFixedHeight(ui->sample->height()+10);
+    //ui->scrollSample->resize(ui->sample->sizeHint());
 }
 
 void MainWindow::tabChanged(int index)
