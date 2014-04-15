@@ -442,6 +442,8 @@
     <addaction name="action_Default_Fonts"/>
     <addaction name="action_Open_folder"/>
     <addaction name="separator"/>
+    <addaction name="action_Update_system_font_list"/>
+    <addaction name="separator"/>
     <addaction name="action_Quit"/>
    </widget>
    <widget class="QMenu" name="menu">
@@ -506,6 +508,18 @@
    </property>
    <property name="text">
     <string>&amp;About</string>
+   </property>
+   <property name="iconVisibleInMenu">
+    <bool>true</bool>
+   </property>
+  </action>
+  <action name="action_Update_system_font_list">
+   <property name="icon">
+    <iconset resource="ressources.qrc">
+     <normaloff>:/images/update</normaloff>:/images/update</iconset>
+   </property>
+   <property name="text">
+    <string>&amp;Update system font list</string>
    </property>
    <property name="iconVisibleInMenu">
     <bool>true</bool>

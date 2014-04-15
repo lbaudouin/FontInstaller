@@ -23,13 +23,15 @@
 #include <QResizeEvent>
 
 #include <QFontDatabase>
+#include <QMessageBox>
 
 #include <QThreadPool>
 #include <QRunnable>
 
 #include <QSettings>
+#include <QProcess>
 
-#define VERSION "0.1.0"
+#define VERSION "0.1.1"
 
 namespace Ui {
     class MainWindow;
@@ -107,6 +109,12 @@ public slots:
     void selectionChanged();
 
     void tabChanged(int);
+
+    void pressAbout();
+
+#ifndef __WIN32__
+    void updateSystemFontList();
+#endif
 
 };
 

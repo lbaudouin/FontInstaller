@@ -11,5 +11,6 @@
         <file alias="remove">images/remove.png</file>
         <file alias="default">images/default.png</file>
         <file alias="folder">images/folder.png</file>
+        <file alias="update">images/update.png</file>
     </qresource>
 </RCC>
