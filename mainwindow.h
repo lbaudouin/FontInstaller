@@ -116,10 +116,7 @@ public slots:
 
     void pressAbout();
 
-#ifndef __WIN32__
     void updateSystemFontList();
-#endif
-
 };
 
 #endif // MAINWINDOW_H

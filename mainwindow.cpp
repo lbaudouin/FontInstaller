@@ -83,7 +83,7 @@ MainWindow::MainWindow(QWidget *parent)
 
     connect(ui->needCharCheckBox,SIGNAL(clicked(bool)),this,SLOT(needAllChararcters(bool)));
 
-#ifndef __WIN32__
+#if !defined(__WIN32__)
     connect(ui->action_Update_system_font_list,SIGNAL(triggered()),this,SLOT(updateSystemFontList()));
 #else
     ui->action_Update_system_font_list->setVisible(false);
@@ -979,14 +979,12 @@ void MainWindow::tabChanged(int index)
     }
 }
 
-#ifndef __WIN32__
 void MainWindow::updateSystemFontList()
 {
     this->setCursor(Qt::WaitCursor);
     QProcess::execute("fc-cache -s -f");
     this->setCursor(Qt::ArrowCursor);
 }
-#endif
 
 void MainWindow::pressAbout()
 {
