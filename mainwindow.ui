@@ -103,7 +103,7 @@
           <item>
            <widget class="QLineEdit" name="lineEdit">
             <property name="text">
-             <string notr="true">AZERTY azerty 123456789 &amp;%#*é&quot;'(-è_çà)=.:€@</string>
+             <string notr="true">AZERTY azerty 123456789 éèàç &amp;~#µ{[(° ,.;: !? $€@</string>
             </property>
            </widget>
           </item>
@@ -191,19 +191,41 @@
               </widget>
              </item>
              <item>
-              <widget class="QLabel" name="labelNeed">
-               <property name="enabled">
-                <bool>false</bool>
-               </property>
+              <widget class="QCheckBox" name="needCharCheckBox">
                <property name="text">
-                <string>Special character:</string>
+                <string>Need all characters</string>
                </property>
               </widget>
              </item>
              <item>
-              <widget class="QLineEdit" name="editNeed">
-               <property name="enabled">
-                <bool>false</bool>
+              <widget class="Line" name="line">
+               <property name="orientation">
+                <enum>Qt::Vertical</enum>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QLabel" name="defaultFolderLabel">
+               <property name="text">
+                <string>Default folder:</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QLineEdit" name="defaultFolderLineEdit">
+               <property name="readOnly">
+                <bool>true</bool>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QToolButton" name="defaultFolderToolButton">
+               <property name="text">
+                <string notr="true">...</string>
+               </property>
+               <property name="icon">
+                <iconset resource="ressources.qrc">
+                 <normaloff>:/images/folder</normaloff>:/images/folder</iconset>
                </property>
               </widget>
              </item>
@@ -255,7 +277,7 @@
                 <rect>
                  <x>0</x>
                  <y>0</y>
-                 <width>870</width>
+                 <width>871</width>
                  <height>101</height>
                 </rect>
                </property>

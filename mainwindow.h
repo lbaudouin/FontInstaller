@@ -31,7 +31,9 @@
 #include <QSettings>
 #include <QProcess>
 
-#define VERSION "0.1.1"
+#include <QRawFont>
+
+#define VERSION "0.1.2"
 
 namespace Ui {
     class MainWindow;
@@ -100,8 +102,8 @@ public slots:
 
     void sizeChanged(int);
     void sampleSizeChanged(int);
-    void textNeededChanded(QString);
 
+    void selectDefaultFolder();
 
     void compareSelected();
 
@@ -109,6 +111,8 @@ public slots:
     void selectionChanged();
 
     void tabChanged(int);
+
+    void needAllChararcters(bool);
 
     void pressAbout();
 

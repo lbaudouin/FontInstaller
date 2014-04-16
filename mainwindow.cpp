@@ -4,27 +4,22 @@ MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent), ui(new Ui::MainWindow), needToUpdateText(false)
 {
     QCoreApplication::setApplicationName( "FontInstaller" );
+
     QSettings settings(qAppName(),qAppName());
 
     ui->setupUi(this);
 
-    ui->treeWidget->hide();
-
-    connect(ui->lineEdit,SIGNAL(returnPressed()),this,SLOT(changeText()));
-
-    connect(ui->buttonDefault,SIGNAL(clicked()),this,SLOT(loadDefaultFonts()));
-    connect(ui->action_Default_Fonts,SIGNAL(triggered()),this,SLOT(loadDefaultFonts()));
-    connect(ui->buttonFolder,SIGNAL(clicked()),this,SLOT(selectFolder()));
-    connect(ui->action_Open_folder,SIGNAL(triggered()),this,SLOT(selectFolder()));
-
-    connect(ui->compareButton,SIGNAL(clicked()),this,SLOT(compareSelected()));
-
-    connect(ui->tableWidget,SIGNAL(itemSelectionChanged()),this,SLOT(selectionChanged()));
-    connect(ui->treeWidget,SIGNAL(itemSelectionChanged()),this,SLOT(selectionChanged()));
-
     updateFontCount(0);
 
     //Display mode
+    QString displayType = settings.value("display","grid").toString();
+    if(displayType=="grid"){
+        ui->treeWidget->hide();
+    }else{
+        ui->tableWidget->hide();
+        ui->radioGrid->setChecked(false);
+        ui->radioLine->setChecked(true);
+    }
     QButtonGroup *buttonGroup = new QButtonGroup;
     buttonGroup->addButton(ui->radioGrid,0);
     buttonGroup->addButton(ui->radioLine,1);
@@ -35,14 +30,22 @@ MainWindow::MainWindow(QWidget *parent)
     ui->optionsWidget->hide();
     for(int i=7;i<41;i++)
         ui->comboSize->addItem(QString::number(i));
-    ui->comboSize->setCurrentIndex(8);
+    int defaultSize = settings.value("size/default").toInt();
+    if(defaultSize<7 || defaultSize>40)
+        defaultSize = 15;
+    ui->comboSize->setCurrentIndex(defaultSize-7);
     for(int i=7;i<101;i++)
         ui->comboSampleSize->addItem(QString::number(i));
-    ui->comboSampleSize->setCurrentIndex(28);;
+    int sampleSize = settings.value("size/sample").toInt();
+    if(sampleSize<7 || sampleSize>100)
+        sampleSize = 35;
+    ui->comboSampleSize->setCurrentIndex(sampleSize-7);
 
     connect(ui->comboSize,SIGNAL(currentIndexChanged(int)),this,SLOT(sizeChanged(int)));
     connect(ui->comboSampleSize,SIGNAL(currentIndexChanged(int)),this,SLOT(sampleSizeChanged(int)));
-    connect(ui->editNeed,SIGNAL(textChanged(QString)),this,SLOT(textNeededChanded(QString)));
+
+    ui->defaultFolderLineEdit->setText(settings.value("defaultFolder").toString());
+    connect(ui->defaultFolderToolButton,SIGNAL(clicked()),this,SLOT(selectDefaultFolder()));
 
     //Sample
     QFont font = ui->sample->font();
@@ -55,17 +58,30 @@ MainWindow::MainWindow(QWidget *parent)
     ui->sample->setFont(font);
     ui->sample->setText(ui->lineEdit->text());
 
+    //Set UI
     ui->installFontButton->setDisabled(true);
+    ui->scrollSample->setWidgetResizable(true);
 
+    //Connect other signals
+    connect(ui->lineEdit,SIGNAL(returnPressed()),this,SLOT(changeText()));
     connect(ui->buttonOptions,SIGNAL(toggled(bool)),ui->optionsWidget,SLOT(setVisible(bool)));
     connect(ui->installFontButton,SIGNAL(clicked()),this,SLOT(installOneFont()));
     connect(ui->installButton,SIGNAL(clicked()),this,SLOT(install()));
     connect(ui->removeButton,SIGNAL(clicked()),this,SLOT(remove()));
     connect(ui->buttonQuit,SIGNAL(clicked()),this,SLOT(close()));
-
     connect(ui->tabWidget,SIGNAL(currentChanged(int)),this,SLOT(tabChanged(int)));
 
-    ui->scrollSample->setWidgetResizable(true);
+    connect(ui->buttonDefault,SIGNAL(clicked()),this,SLOT(loadDefaultFonts()));
+    connect(ui->action_Default_Fonts,SIGNAL(triggered()),this,SLOT(loadDefaultFonts()));
+    connect(ui->buttonFolder,SIGNAL(clicked()),this,SLOT(selectFolder()));
+    connect(ui->action_Open_folder,SIGNAL(triggered()),this,SLOT(selectFolder()));
+
+    connect(ui->compareButton,SIGNAL(clicked()),this,SLOT(compareSelected()));
+
+    connect(ui->tableWidget,SIGNAL(itemSelectionChanged()),this,SLOT(selectionChanged()));
+    connect(ui->treeWidget,SIGNAL(itemSelectionChanged()),this,SLOT(selectionChanged()));
+
+    connect(ui->needCharCheckBox,SIGNAL(clicked(bool)),this,SLOT(needAllChararcters(bool)));
 
 #ifndef __WIN32__
     connect(ui->action_Update_system_font_list,SIGNAL(triggered()),this,SLOT(updateSystemFontList()));
@@ -78,6 +94,10 @@ MainWindow::MainWindow(QWidget *parent)
 
 MainWindow::~MainWindow()
 {
+    QSettings settings(qAppName(),qAppName());
+    settings.setValue("sizes/default",ui->comboSize->currentIndex()+7);
+    settings.setValue("sizes/sample",ui->comboSampleSize->currentIndex()+7);
+    settings.setValue("display",ui->radioGrid->isChecked()?"grid":"line");
 }
 
 void MainWindow::resizeEvent(QResizeEvent *event)
@@ -139,6 +159,7 @@ void MainWindow::changeDisplay(int)
     if(ui->radioGrid->isChecked()){
         ui->tableWidget->show();
         ui->treeWidget->hide();
+        redrawTable();
     }else{
         ui->tableWidget->hide();
         ui->treeWidget->show();
@@ -157,6 +178,29 @@ void MainWindow::updateFontCount(int nb)
     this->setWindowTitle(title);
 }
 
+void MainWindow::selectDefaultFolder()
+{
+    QString defaultPath = "./Fonts/";
+    QDir defaultDir;
+    if(!defaultDir.exists(defaultPath)){
+        defaultPath = QDir::homePath() + "/Documents/Fonts/";
+        if(!defaultDir.exists(defaultPath)){
+            defaultPath = QDir::homePath();
+        }
+    }
+
+    QString folderPath = QFileDialog::getExistingDirectory(this,tr("Select default font folder"),defaultPath);
+
+    if(folderPath.isEmpty())
+        return;
+
+    QSettings settings(qAppName(),qAppName());
+
+    settings.setValue("defaultFolder",folderPath);
+
+    ui->defaultFolderLineEdit->setText(folderPath);
+}
+
 void MainWindow::changeText()
 {
     QString text = ui->lineEdit->text().trimmed();
@@ -166,6 +210,7 @@ void MainWindow::changeText()
      }else{
          needToUpdateText = true;
      }
+     needAllChararcters(ui->needCharCheckBox->isChecked());
 }
 
 void MainWindow::applyText()
@@ -201,12 +246,9 @@ void MainWindow::applyText()
 
 void MainWindow::selectFolder()
 {
-    QString defaultPath = "./Fonts/";
-    QDir defaultDir(defaultPath);
-    if(!defaultDir.exists())
-        defaultDir.setPath("~/Documents/Fonts/");
-    if(!defaultDir.exists())
-        defaultPath = QDir::homePath();
+    QSettings settings(qAppName(),qAppName());
+
+    QString defaultPath = settings.value("defaultFolder",QDir::homePath()).toString();
     QString dirpath = QFileDialog::getExistingDirectory(this, tr("Open Directory"), defaultPath, QFileDialog::ShowDirsOnly);
 
     QCoreApplication::processEvents();
@@ -217,14 +259,8 @@ void MainWindow::selectFolder()
 
 void MainWindow::openFolder(QString path)
 {
-    QFontDatabase::removeAllApplicationFonts();
-
     if(path.isEmpty())
         return;
-
-    QTime time;
-    time.restart();
-    int nb = 0;
 
     QDir dir(path);
     if(!dir.exists())
@@ -236,6 +272,8 @@ void MainWindow::openFolder(QString path)
         return;
 
     this->setCursor( Qt::WaitCursor );
+
+    QFontDatabase::removeAllApplicationFonts();
 
     QProgressDialog *progressDialog = new QProgressDialog(tr("Loading"),tr("Cancel"),0,listFiles.size()-1,this);
     progressDialog->setWindowTitle( this->windowTitle() );
@@ -265,6 +303,7 @@ void MainWindow::openFolder(QString path)
 
     QList<FontFileInfo> fontFilesInfo;
 
+    int nb = 0;
     for(int i=0;i<listFiles.size();i++){
         QString file = dir.absoluteFilePath(listFiles.at(i));
 
@@ -334,8 +373,9 @@ void MainWindow::openFolder(QString path)
            }
 
            fontFamilyInfo.styles = fontStyleInfo;
-           fontFileInfo.families.push_back(fontFamilyInfo);
 
+           if(!fontFamilyInfo.styles.isEmpty())
+            fontFileInfo.families.push_back(fontFamilyInfo);
         }
 
         if(!families.isEmpty())
@@ -357,11 +397,6 @@ void MainWindow::openFolder(QString path)
 
     ui->tableWidget->setColumnCount(0);
     ui->tableWidget->setRowCount(0);
-
-    qDebug() << "Loading time: " << time.elapsed() << nb;
-
-    QTime displayTime;
-    displayTime.restart();
 
     QProgressDialog * progressDisplay = new QProgressDialog(tr("Displaying"),tr("Cancel"),0,nb,this);
     progressDisplay->setWindowTitle( this->windowTitle() );
@@ -422,6 +457,8 @@ void MainWindow::openFolder(QString path)
 
     ui->treeWidget->resizeColumnToContents(0);
     ui->treeWidget->resizeColumnToContents(1);
+
+    needAllChararcters(ui->needCharCheckBox->isChecked());
 
     ui->tableWidget->item(0,0)->setSelected(true);
     ui->treeWidget->invisibleRootItem()->child(0)->setSelected(true);
@@ -538,6 +575,8 @@ void MainWindow::loadDefaultFonts()
     fontTree->resizeColumnToContents(1);
 
     redrawTable(tableItemList,sizes);
+
+    needAllChararcters(ui->needCharCheckBox->isChecked());
 
     ui->tableWidget->item(0,0)->setSelected(true);
     ui->treeWidget->invisibleRootItem()->child(0)->setSelected(true);
@@ -667,13 +706,86 @@ void MainWindow::sampleSizeChanged(int index)
     font.setPointSize(index + 7);
     ui->sample->setFont(font);
 
-    ui->scrollSample->setFixedHeight( ui->sample->height() + ui->scrollSample->horizontalScrollBar()->height() + 5 );
+    QCoreApplication::processEvents();
+
+    ui->scrollSample->setFixedHeight( ui->sample->sizeHint().height() + ui->scrollSample->horizontalScrollBar()->height() + 15 );
 }
 
-void MainWindow::textNeededChanded(QString text)
+void MainWindow::needAllChararcters(bool needAll)
 {
-    //TODO, test if a char is included in the font
-    Q_UNUSED(text);
+    if(needAll){
+        QString text = ui->lineEdit->text().trimmed();
+        QStringList characters;
+        for(int i=0;i<text.size();i++)
+            characters << text.at(i);
+        characters.removeDuplicates();
+
+        for(int i=0;i<ui->tableWidget->rowCount();i++){
+            for(int j=0;j<ui->tableWidget->columnCount();j++){
+                QTableWidgetItem *item =  ui->tableWidget->item(i,j);
+                if(item){
+                    bool foundAll = true;
+                    QRawFont rawFont = QRawFont::fromFont(item->font());
+                    for(int i=0;i<characters.size();i++){
+                        if(!rawFont.supportsCharacter(characters.at(i).at(0))){
+                            foundAll = false;
+                            break;
+                        }
+                    }
+                    if(!foundAll)
+                        item->setForeground(Qt::red);
+                    else
+                        item->setForeground(Qt::black);
+                }
+            }
+        }
+        QTreeWidgetItem *root = ui->treeWidget->invisibleRootItem();
+        for(int i=0;i<root->childCount();i++){
+            QTreeWidgetItem *item = root->child(i);
+            bool foundAll = true;
+            if(item->childCount()==0)
+                continue;
+            QRawFont rawFont = QRawFont::fromFont(item->child(0)->font(1));
+            for(int i=0;i<characters.size();i++){
+                if(!rawFont.supportsCharacter(characters.at(i).at(0))){
+                    foundAll = false;
+                    break;
+                }
+            }
+            if(!foundAll){
+                item->setForeground(0,Qt::red);
+                for(int j=0;j<item->childCount();j++){
+                    item->child(j)->setForeground(0,Qt::red);
+                    item->child(j)->setForeground(1,Qt::red);
+                }
+            }
+            else{
+                item->setForeground(0,Qt::black);
+                for(int j=0;j<item->childCount();j++){
+                    item->child(j)->setForeground(0,Qt::black);
+                    item->child(j)->setForeground(1,Qt::black);
+                }
+            }
+        }
+    }else{
+        for(int i=0;i<ui->tableWidget->rowCount();i++){
+            for(int j=0;j<ui->tableWidget->columnCount();j++){
+                QTableWidgetItem *item =  ui->tableWidget->item(i,j);
+                if(item){
+                    item->setForeground(Qt::black);
+                }
+            }
+        }
+        QTreeWidgetItem *root = ui->treeWidget->invisibleRootItem();
+        for(int i=0;i<root->childCount();i++){
+            QTreeWidgetItem *item = root->child(i);
+            item->setForeground(0,Qt::black);
+            for(int j=0;j<item->childCount();j++){
+                item->child(j)->setForeground(0,Qt::black);
+                item->child(j)->setForeground(1,Qt::black);
+            }
+        }
+    }
 }
 
 void MainWindow::compareItem(QTreeWidgetItem *item)
@@ -848,7 +960,7 @@ void MainWindow::selectionChanged()
 
     QCoreApplication::processEvents();
 
-    ui->scrollSample->setFixedHeight( ui->sample->height() + ui->scrollSample->horizontalScrollBar()->height() + 5 );
+    ui->scrollSample->setFixedHeight( ui->sample->sizeHint().height() + ui->scrollSample->horizontalScrollBar()->height() + 15 );
 }
 
 void MainWindow::tabChanged(int index)
